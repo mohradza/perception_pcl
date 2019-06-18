@@ -189,6 +189,21 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     search_radius_ = config.radius_search;
     NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
   }
+  if (scale1_ != config.scale1)
+  {
+    scale1_ = config.scale1;
+    NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
+  }
+  if (scale2_ != config.scale2)
+  {
+    scale2_ = config.scale2;
+    NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
+  }
+  if (threshold_ != config.threshold)
+  {
+    threshold_ = config.threshold;
+    NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

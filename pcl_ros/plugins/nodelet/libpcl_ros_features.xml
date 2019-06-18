@@ -82,4 +82,10 @@
     </description>
   </class>
 
+  <class name="pcl/DiffNormals" type="DiffNormals" base_class_type="nodelet::Nodelet">
+    <description>
+      DiffNormals estimates local surface properties at each 3D point, and determines surface roughness.
+    </description>
+  </class>
+
 </library>

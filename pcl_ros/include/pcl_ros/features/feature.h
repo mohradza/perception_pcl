@@ -97,6 +97,10 @@ namespace pcl_ros
       /** \brief The number of K nearest neighbors to use for each point. */
       int k_;
 
+      float scale1_;
+      float scale2_;
+      float threshold_;
+      
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;
 
