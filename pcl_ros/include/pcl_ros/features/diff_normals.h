@@ -72,8 +72,9 @@ namespace pcl_ros
       /** \brief PCL implementation object. */
       pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> impl_;
       pcl::search::Search<pcl::PointXYZ>::Ptr tree;
+      pcl::search::Search<pcl::PointXYZ>::Ptr tree2;
 
-      typedef pcl::PointCloud<pcl::PointXYZ> PointCloudOut;
+      typedef pcl::PointCloud<pcl::PointNormal> PointCloudOut;
 
       /** \brief Child initialization routine. Internal method. */
       inline bool 

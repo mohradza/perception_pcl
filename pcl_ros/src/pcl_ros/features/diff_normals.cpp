@@ -73,7 +73,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   }
   else
   {
-    // Use KDTree for non-organized data
+    // Use KDTree for non-organized dataPointNormal
     tree.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
   }
 
@@ -154,54 +154,74 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // Apply filter
   condrem.filter (*don_cloud_filtered_normals);
 
-  // Copy normal to xyz point cloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr don_cloud_filtered_xyz (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*don_cloud_filtered_normals, *don_cloud_filtered_xyz);
-
   // Print size of filtered output
-  std::cout << "Filtered Pointcloud: " << don_cloud_filtered_xyz->points.size () << " data points." << std::endl;
+  std::cout << "Filtered Pointcloud: " << don_cloud_filtered_normals->points.size () << " data points." << std::endl;
 
 
 
 
-  // Create the normal estimation class, and pass the input dataset to it
+
+
+
+
+  ///////////////////////
+  // BUILD SEARCH TREE //
+  ///////////////////////
+
+  if (cloud->isOrganized ())
+  {
+    tree2.reset (new pcl::search::OrganizedNeighbor<pcl::PointXYZ> ());
+  }
+  else
+  {
+    // Use KDTree for non-organized data
+    tree2.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
+  }
+
+  // Set input pointcloud for search tree
+  tree2->setInputCloud (cloud);
+
+  /////////////////////
+  // COMPUTE NORMALS //
+  /////////////////////
+
   pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne2;
-  ne2.setInputCloud (don_cloud_filtered_xyz);
-
-  // Create an empty kdtree representation, and pass it to the normal estimation object.
-  // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
+  ne2.setInputCloud (cloud);
   ne2.setSearchMethod (tree2);
 
-  // Output datasets
-  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered2_normals (new pcl::PointCloud<pcl::PointNormal>);
+  // Set viewpoint, very important so normals are all pointed in the same direction
+  ne2.setViewPoint (std::numeric_limits<float>::max (), std::numeric_limits<float>::max (), std::numeric_limits<float>::max ());
 
-  // Use all neighbors in a sphere of radius 3cm
-  ne2.setRadiusSearch (0.03);
 
-  // Compute the features
-  ne2.compute (*don_cloud_filtered2_normals);
+  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud2 (new pcl::PointCloud<pcl::PointNormal>);
 
-  // pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionOr<pcl::PointNormal> () );
-  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT, 100000000000)) );
+  ne2.setRadiusSearch (scale1_);
+  ne2.compute (*don_cloud2);
+
+
+  pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionOr<pcl::PointNormal> () );
+  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("x", pcl::ComparisonOps::LT, 1000000000000000)) );
   
-  // // Build the filter
-  // pcl::ConditionalRemoval<pcl::PointNormal> condrem2;
-  // condrem2.setCondition (range_cond2);
-  // condrem2.setInputCloud (don_cloud_filtered2_normals);
+  // Build the filter
+  pcl::ConditionalRemoval<pcl::PointNormal> condrem2;
+  condrem2.setCondition (range_cond2);
+  condrem2.setInputCloud (don_cloud2);
 
-  // pcl::PointCloud<pcl::PointNormal>::Ptr doncloud_filtered_normals2 (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered_normals2 (new pcl::PointCloud<pcl::PointNormal>);
 
-  // // Apply filter
-  // condrem2.filter (*doncloud_filtered_normals2);
-
-  // // Copy normal to xyz point cloud
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr doncloud_filtered2_xyz (new pcl::PointCloud<pcl::PointXYZ>);
-  // pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*doncloud_filtered_normals2, *doncloud_filtered2_xyz);
+  // Apply filter
+  condrem2.filter (*don_cloud_filtered_normals2);
 
 
+  // Need to fuse together PointNormal data with PointXYZ
+  // https://stackoverflow.com/questions/34400656/how-can-i-compute-a-normal-for-each-point-in-cloud
 
+  // Line 48: http://docs.pointclouds.org/1.7.0/normal__3d_8hpp_source.html
+  // Line 189: http://docs.pointclouds.org/1.7.0/feature_8hpp_source.html
 
+  // http://www.meshlab.net/
+  // http://meshlabstuff.blogspot.com/2009/09/meshing-point-clouds.html
+  // https://pixinsight.com/developer/pcl/doc/html/classpcl_1_1SurfaceSpline.html
 
 
 
@@ -214,7 +234,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   // Estimate the feature
   PointCloudOut output;
-  output = *don_cloud_filtered_xyz;
+  output = *don_cloud_filtered_normals2;
 
   // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud->header;
