@@ -66,6 +66,9 @@ namespace pcl_ros
   class DiffNormals: public Feature
   {
     private:
+
+
+
       /** \brief PCL implementation object. */
       pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> impl_;
       pcl::search::Search<pcl::PointXYZ>::Ptr tree;
@@ -90,6 +93,15 @@ namespace pcl_ros
       void computePublish (const PointCloudInConstPtr &cloud,
                            const PointCloudInConstPtr &surface,
                            const IndicesPtr &indices);
+
+      template<typename PointInT, typename PointNT, typename PointOutT> 
+      void filterNormalsWithHighCurvature(
+        const pcl::PointCloud<PointNT> & cloud,
+        std::vector<int> &indices_to_use,
+        std::vector<int> &indices_out,
+        std::vector<int> &indices_in,
+        float threshold
+      );
 
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW  

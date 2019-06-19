@@ -113,8 +113,8 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   ne.compute (*normals_large_scale);
 
   // Create output cloud for Difference of Normals (DoN) results
-  pcl::PointCloud<pcl::PointNormal>::Ptr doncloud (new pcl::PointCloud<pcl::PointNormal>);
-  pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *doncloud);
+  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *don_cloud);
 
   ///////////////////////////////////
   // COMPUTE DIFFERENCE OF NORMALS //
@@ -136,7 +136,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   }
 
   // Compute DoN
-  don.computeFeature (*doncloud);
+  don.computeFeature (*don_cloud);
 
   // Build the condition for filtering
   std::cout << "Filtering out DoN mag <= " << threshold_ << "..." << std::endl;
@@ -147,29 +147,113 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // Build the filter
   pcl::ConditionalRemoval<pcl::PointNormal> condrem;
   condrem.setCondition (range_cond);
-  condrem.setInputCloud (doncloud);
+  condrem.setInputCloud (don_cloud);
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr doncloud_filtered_normals (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered_normals (new pcl::PointCloud<pcl::PointNormal>);
 
   // Apply filter
-  condrem.filter (*doncloud_filtered_normals);
+  condrem.filter (*don_cloud_filtered_normals);
 
   // Copy normal to xyz point cloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr doncloud_filtered_xyz (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*doncloud_filtered_normals, *doncloud_filtered_xyz);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr don_cloud_filtered_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*don_cloud_filtered_normals, *don_cloud_filtered_xyz);
 
   // Print size of filtered output
-  std::cout << "Filtered Pointcloud: " << doncloud_filtered_xyz->points.size () << " data points." << std::endl;
+  std::cout << "Filtered Pointcloud: " << don_cloud_filtered_xyz->points.size () << " data points." << std::endl;
+
+
+
+
+  // Create the normal estimation class, and pass the input dataset to it
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne2;
+  ne2.setInputCloud (don_cloud_filtered_xyz);
+
+  // Create an empty kdtree representation, and pass it to the normal estimation object.
+  // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
+  ne2.setSearchMethod (tree2);
+
+  // Output datasets
+  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered2_normals (new pcl::PointCloud<pcl::PointNormal>);
+
+  // Use all neighbors in a sphere of radius 3cm
+  ne2.setRadiusSearch (0.03);
+
+  // Compute the features
+  ne2.compute (*don_cloud_filtered2_normals);
+
+  // pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionOr<pcl::PointNormal> () );
+  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT, 100000000000)) );
+  
+  // // Build the filter
+  // pcl::ConditionalRemoval<pcl::PointNormal> condrem2;
+  // condrem2.setCondition (range_cond2);
+  // condrem2.setInputCloud (don_cloud_filtered2_normals);
+
+  // pcl::PointCloud<pcl::PointNormal>::Ptr doncloud_filtered_normals2 (new pcl::PointCloud<pcl::PointNormal>);
+
+  // // Apply filter
+  // condrem2.filter (*doncloud_filtered_normals2);
+
+  // // Copy normal to xyz point cloud
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr doncloud_filtered2_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*doncloud_filtered_normals2, *doncloud_filtered2_xyz);
+
+
+
+
+
+
+
+
+
+  //////////////////////////////////
+  // PUBLISH FILTERED POINT CLOUD //
+  //////////////////////////////////
+
 
   // Estimate the feature
   PointCloudOut output;
-  output = *doncloud_filtered_xyz;
+  output = *don_cloud_filtered_xyz;
 
   // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud->header;
 
 pub_output_.publish (output);
 
+}
+
+// http://docs.pointclouds.org/1.8.1/cvfh_8hpp_source.html
+template<typename PointInT, typename PointNT, typename PointOutT>
+void pcl_ros::DiffNormals::filterNormalsWithHighCurvature(
+  const pcl::PointCloud<PointNT> & cloud,
+  std::vector<int> &indices_to_use,
+  std::vector<int> &indices_out,
+  std::vector<int> &indices_in,
+  float threshold)
+{
+  indices_out.resize (cloud.points.size ());
+  indices_in.resize (cloud.points.size ());
+  
+  size_t in, out;
+  in = out = 0;
+
+  for (int i = 0; i < static_cast<int> (indices_to_use.size ()); i++)
+  {
+    if (cloud.points[indices_to_use[i]].curvature > threshold)
+    {
+      indices_out[out] = indices_to_use[i];
+      out++;
+    }
+    else
+    {
+      indices_in[in] = indices_to_use[i];
+      in++;
+    }
+  }
+
+  indices_out.resize (out);
+  indices_in.resize (in);
 }
 
 typedef pcl_ros::DiffNormals DiffNormals;
