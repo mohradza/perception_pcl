@@ -150,9 +150,9 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // Compute DoN
   don.computeFeature (*doncloud);
 
-  // Save DoN features
-  pcl::PCDWriter writer;
-  writer.write<pcl::PointNormal> ("don.pcd", *doncloud, false); 
+  // // Save DoN features
+  // pcl::PCDWriter writer;
+  // writer.write<pcl::PointNormal> ("don.pcd", *doncloud, false); 
 
   // Filter by magnitude
   std::cout << "Filtering out DoN mag <= " << threshold_ << "..." << std::endl;
@@ -161,8 +161,10 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond (
     new pcl::ConditionOr<pcl::PointNormal> ()
     );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr (
+  //                              new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::GT, threshold_))
   range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr (
-                               new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::GT, threshold_))
+                               new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, threshold_))
                              );
   // Build the filter
   pcl::ConditionalRemoval<pcl::PointNormal> condrem;
@@ -180,9 +182,9 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*doncloud_filtered, *doncloud_filtered_xyz);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZ>);
 
-  pcl::copyPointCloud<pcl::PointXYZ, pcl::PointXYZ>(*cloud, *cloud2);
+  // pcl::copyPointCloud<pcl::PointXYZ, pcl::PointXYZ>(*cloud, *cloud2);
 
   // Save filtered output
   std::cout << "Filtered Pointcloud: " << doncloud->points.size () << " data points." << std::endl;
@@ -208,34 +210,34 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // http://www.pcl-users.org/Using-kdtree-radiusSearch-to-Remove-Points-td4025266.html#a4025281
 
 
-  //kdTree 
-  pcl::KdTreeFLANN<pcl::PointXYZ> kdtree; 
-  kdtree.setInputCloud (doncloud_filtered_xyz); 
-  kdtree.setSortedResults(true); 
+  // //kdTree 
+  // pcl::KdTreeFLANN<pcl::PointXYZ> kdtree; 
+  // kdtree.setInputCloud (doncloud_filtered_xyz); 
+  // kdtree.setSortedResults(true); 
 
-  for (int i = 0; i < cloud->size(); i++) 
-  { 
+  // for (int i = 0; i < cloud->size(); i++) 
+  // { 
 
-    //searchPoint 
-    pcl::PointXYZ searchPoint = cloud->at(i) ; 
+  //   //searchPoint 
+  //   pcl::PointXYZ searchPoint = cloud->at(i) ; 
 
-    //result from radiusSearch() 
-    std::vector<int> pointIdxRadiusSearch; 
-    std::vector<float> pointRadiusSquaredDistance; 
+  //   //result from radiusSearch() 
+  //   std::vector<int> pointIdxRadiusSearch; 
+  //   std::vector<float> pointRadiusSquaredDistance; 
 
-    if ( kdtree.radiusSearch (searchPoint, search_radius_, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 ) 
-    { 
-      //delete every point in target 
-      for (size_t j = 0; j < pointIdxRadiusSearch.size (); ++j) 
-      { 
-              //is this the way to erase correctly??? 
-              cloud2->erase(cloud2->points.begin() + pointIdxRadiusSearch[j]); 
+  //   if ( kdtree.radiusSearch (searchPoint, search_radius_, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 ) 
+  //   { 
+  //     //delete every point in target 
+  //     for (size_t j = 0; j < pointIdxRadiusSearch.size (); ++j) 
+  //     { 
+  //             //is this the way to erase correctly??? 
+  //             cloud2->erase(cloud2->points.begin() + pointIdxRadiusSearch[j]); 
               
-      } 
-    }
-  } 
+  //     } 
+  //   }
+  // } 
 
-pub_output_.publish (cloud2);
+pub_output_.publish (doncloud_filtered_xyz);
 
 }
 
