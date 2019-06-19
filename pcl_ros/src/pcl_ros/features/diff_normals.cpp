@@ -62,85 +62,73 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
                                            const PointCloudInConstPtr &surface,
                                            const IndicesPtr &indices)
 {
-  // // Set the parameters
-  // impl_.setKSearch (k_);
-  // impl_.setRadiusSearch (search_radius_);
 
-  // // Set the inputs
-  // impl_.setInputCloud (cloud);
-  // impl_.setIndices (indices);
-  // impl_.setSearchSurface (surface);
-  // // Estimate the feature
-  // PointCloudOut output;
-  // impl_.compute (output);
+  ///////////////////////
+  // BUILD SEARCH TREE //
+  ///////////////////////
 
-  // // Publish a Boost shared ptr const data
-  // // Enforce that the TF frame and the timestamp are copied
-  // output.header = cloud->header;
-  // pub_output_.publish (output.makeShared ());
-
-  // // Load cloud in blob format
-  // pcl::PCLPointCloud2 blob;
-  // pcl::io::loadPCDFile (infile.c_str (), blob);
-  // pcl::PointCloud<PointXYZRGB>::Ptr cloud (new pcl::PointCloud<PointXYZRGB>);
-  // pcl::fromPCLPointCloud2 (blob, *cloud);
-
-  // Create a search tree, use KDTreee for non-organized data.
-  
   if (cloud->isOrganized ())
   {
     tree.reset (new pcl::search::OrganizedNeighbor<pcl::PointXYZ> ());
   }
   else
   {
+    // Use KDTree for non-organized data
     tree.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
   }
 
-  // Set the input pointcloud for the search tree
+  // Set input pointcloud for search tree
   tree->setInputCloud (cloud);
 
+  // Check if small scale is smaller than large scale 
   if (scale1_ >= scale2_)
   {
     std::cerr << "Error: Large scale must be > small scale!" << std::endl;
     exit (EXIT_FAILURE);
   }
 
-  // Compute normals using both small and large scales at each point
+  /////////////////////
+  // COMPUTE NORMALS //
+  /////////////////////
+
   pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne;
   ne.setInputCloud (cloud);
   ne.setSearchMethod (tree);
 
-  /**
-   * NOTE: setting viewpoint is very important, so that we can ensure
-   * normals are all pointed in the same direction!
-   */
+  // Set viewpoint, very important so normals are all pointed in the same direction
   ne.setViewPoint (std::numeric_limits<float>::max (), std::numeric_limits<float>::max (), std::numeric_limits<float>::max ());
 
-  // calculate normals with the small scale
+  // Calculate normals with the small scale
   std::cout << "Calculating normals for scale..." << scale1_ << std::endl;
   pcl::PointCloud<pcl::PointNormal>::Ptr normals_small_scale (new pcl::PointCloud<pcl::PointNormal>);
 
   ne.setRadiusSearch (scale1_);
   ne.compute (*normals_small_scale);
 
-  // calculate normals with the large scale
+  // Calculate normals with the large scale
   std::cout << "Calculating normals for scale..." << scale2_ << std::endl;
   pcl::PointCloud<pcl::PointNormal>::Ptr normals_large_scale (new pcl::PointCloud<pcl::PointNormal>);
 
   ne.setRadiusSearch (scale2_);
   ne.compute (*normals_large_scale);
 
-  // Create output cloud for DoN results
+  // Create output cloud for Difference of Normals (DoN) results
   pcl::PointCloud<pcl::PointNormal>::Ptr doncloud (new pcl::PointCloud<pcl::PointNormal>);
   pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *doncloud);
 
-  std::cout << "Calculating DoN... " << std::endl;
+  ///////////////////////////////////
+  // COMPUTE DIFFERENCE OF NORMALS //
+  ///////////////////////////////////
+
   // Create DoN operator
+  std::cout << "Calculating DoN... " << std::endl;
   pcl::DifferenceOfNormalsEstimation<pcl::PointXYZ, pcl::PointNormal, pcl::PointNormal> don;
+
   don.setInputCloud (cloud);
   don.setNormalScaleLarge (normals_large_scale);
   don.setNormalScaleSmall (normals_small_scale);
 
+  // Check if can initialize DoN feature operator
   if (!don.initCompute ())
   {
     std::cerr << "Error: Could not initialize DoN feature operator" << std::endl;
@@ -150,94 +138,37 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // Compute DoN
   don.computeFeature (*doncloud);
 
-  // // Save DoN features
-  // pcl::PCDWriter writer;
-  // writer.write<pcl::PointNormal> ("don.pcd", *doncloud, false); 
-
-  // Filter by magnitude
+  // Build the condition for filtering
   std::cout << "Filtering out DoN mag <= " << threshold_ << "..." << std::endl;
 
-  // Build the condition for filtering
-  pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond (
-    new pcl::ConditionOr<pcl::PointNormal> ()
-    );
-  // range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr (
-  //                              new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::GT, threshold_))
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr (
-                               new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, threshold_))
-                             );
+  pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointNormal> () );
+  range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, threshold_)) );
+  
   // Build the filter
   pcl::ConditionalRemoval<pcl::PointNormal> condrem;
   condrem.setCondition (range_cond);
   condrem.setInputCloud (doncloud);
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr doncloud_filtered (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PointCloud<pcl::PointNormal>::Ptr doncloud_filtered_normals (new pcl::PointCloud<pcl::PointNormal>);
 
   // Apply filter
-  condrem.filter (*doncloud_filtered);
+  condrem.filter (*doncloud_filtered_normals);
 
-  doncloud = doncloud_filtered;
-
+  // Copy normal to xyz point cloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr doncloud_filtered_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*doncloud_filtered_normals, *doncloud_filtered_xyz);
 
-  pcl::copyPointCloud<pcl::PointNormal, pcl::PointXYZ>(*doncloud_filtered, *doncloud_filtered_xyz);
+  // Print size of filtered output
+  std::cout << "Filtered Pointcloud: " << doncloud_filtered_xyz->points.size () << " data points." << std::endl;
 
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZ>);
-
-  // pcl::copyPointCloud<pcl::PointXYZ, pcl::PointXYZ>(*cloud, *cloud2);
-
-  // Save filtered output
-  std::cout << "Filtered Pointcloud: " << doncloud->points.size () << " data points." << std::endl;
-
-  // writer.write<pcl::PointNormal> ("don_filtered.pcd", *doncloud, false); 
-
-  // // Estimate the feature
+  // Estimate the feature
   PointCloudOut output;
   output = *doncloud_filtered_xyz;
-  // impl_.compute (output);
 
-  // Publish a Boost shared ptr const data
-  // Enforce that the TF frame and the timestamp are copied
+  // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud->header;
 
-
-  // https://stackoverflow.com/questions/41960911/how-can-i-get-the-pointindices-of-a-given-pointcloud
-
-  // https://stackoverflow.com/questions/44921987/removing-points-from-a-pclpointcloudpclpointxyzrgb
-
-  // http://www.pcl-users.org/Subtracting-clouds-td3569049.html
-
-  // http://www.pcl-users.org/Using-kdtree-radiusSearch-to-Remove-Points-td4025266.html#a4025281
-
-
-  // //kdTree 
-  // pcl::KdTreeFLANN<pcl::PointXYZ> kdtree; 
-  // kdtree.setInputCloud (doncloud_filtered_xyz); 
-  // kdtree.setSortedResults(true); 
-
-  // for (int i = 0; i < cloud->size(); i++) 
-  // { 
-
-  //   //searchPoint 
-  //   pcl::PointXYZ searchPoint = cloud->at(i) ; 
-
-  //   //result from radiusSearch() 
-  //   std::vector<int> pointIdxRadiusSearch; 
-  //   std::vector<float> pointRadiusSquaredDistance; 
-
-  //   if ( kdtree.radiusSearch (searchPoint, search_radius_, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 ) 
-  //   { 
-  //     //delete every point in target 
-  //     for (size_t j = 0; j < pointIdxRadiusSearch.size (); ++j) 
-  //     { 
-  //             //is this the way to erase correctly??? 
-  //             cloud2->erase(cloud2->points.begin() + pointIdxRadiusSearch[j]); 
-              
-  //     } 
-  //   }
-  // } 
-
-pub_output_.publish (doncloud_filtered_xyz);
+pub_output_.publish (output);
 
 }
 
