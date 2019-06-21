@@ -209,12 +209,14 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   pcl::ConditionAnd<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionAnd<pcl::PointNormal> () );
   
   
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, -0.1)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT,  0.1)) );  
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::GT,  0.98)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::LT,  9.99)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT, -0.1)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::LT,  0.1)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, normal_x_min_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT, normal_x_max_threshold_)) );  
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT, normal_y_min_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::LT, normal_y_max_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::GT, normal_z_min_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::LT, normal_z_max_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::GT, curvature_min_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, curvature_max_threshold_)) );
 
   // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, -0.1)) );
   // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT,  0.1)) );  

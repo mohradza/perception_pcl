@@ -107,6 +107,8 @@ namespace pcl_ros
       float normal_y_max_threshold_;
       float normal_z_min_threshold_;
       float normal_z_max_threshold_;
+      float curvature_min_threshold_;
+      float curvature_max_threshold_;
       
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;

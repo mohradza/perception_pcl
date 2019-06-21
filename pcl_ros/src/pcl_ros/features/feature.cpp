@@ -239,6 +239,16 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     normal_z_max_threshold_ = config.normal_z_max_threshold;
     NODELET_DEBUG ("[config_callback] Setting the maximum x-direction normal threshold: %f.", normal_z_max_threshold_);
   }
+  if (curvature_min_threshold_ != config.curvature_min_threshold)
+  {
+    curvature_min_threshold_ = config.curvature_min_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the minimum curvature threshold: %f.", curvature_min_threshold_);
+  }
+  if (curvature_max_threshold_ != config.curvature_max_threshold)
+  {
+    curvature_max_threshold_ = config.curvature_max_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the maximum curvature threshold: %f.", curvature_max_threshold_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
