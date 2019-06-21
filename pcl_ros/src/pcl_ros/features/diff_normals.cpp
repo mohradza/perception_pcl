@@ -63,99 +63,99 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
                                            const IndicesPtr &indices)
 {
 
-  // ///////////////////////
-  // // BUILD SEARCH TREE //
-  // ///////////////////////
+  ///////////////////////
+  // BUILD SEARCH TREE //
+  ///////////////////////
 
-  // if (cloud->isOrganized ())
-  // {
-  //   tree.reset (new pcl::search::OrganizedNeighbor<pcl::PointXYZ> ());
-  // }
-  // else
-  // {
-  //   // Use KDTree for non-organized dataPointNormal
-  //   tree.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
-  // }
+  if (cloud->isOrganized ())
+  {
+    tree.reset (new pcl::search::OrganizedNeighbor<pcl::PointXYZ> ());
+  }
+  else
+  {
+    // Use KDTree for non-organized dataPointNormal
+    tree.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
+  }
 
-  // // Set input pointcloud for search tree
-  // tree->setInputCloud (cloud);
+  // Set input pointcloud for search tree
+  tree->setInputCloud (cloud);
 
-  // // Check if small scale is smaller than large scale 
-  // if (scale1_ >= scale2_)
-  // {
-  //   std::cerr << "Error: Large scale must be > small scale!" << std::endl;
-  //   exit (EXIT_FAILURE);
-  // }
+  // Check if small scale is smaller than large scale 
+  if (scale1_ >= scale2_)
+  {
+    std::cerr << "Error: Large scale must be > small scale!" << std::endl;
+    exit (EXIT_FAILURE);
+  }
 
-  // /////////////////////
-  // // COMPUTE NORMALS //
-  // /////////////////////
+  /////////////////////
+  // COMPUTE NORMALS //
+  /////////////////////
 
-  // pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne;
-  // ne.setInputCloud (cloud);
-  // ne.setSearchMethod (tree);
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne;
+  ne.setInputCloud (cloud);
+  ne.setSearchMethod (tree);
 
-  // // Set viewpoint, very important so normals are all pointed in the same direction
-  // ne.setViewPoint (std::numeric_limits<float>::max (), std::numeric_limits<float>::max (), std::numeric_limits<float>::max ());
+  // Set viewpoint, very important so normals are all pointed in the same direction
+  ne.setViewPoint (std::numeric_limits<float>::max (), std::numeric_limits<float>::max (), std::numeric_limits<float>::max ());
 
-  // // Calculate normals with the small scale
-  // std::cout << "Calculating normals for scale..." << scale1_ << std::endl;
-  // pcl::PointCloud<pcl::PointNormal>::Ptr normals_small_scale (new pcl::PointCloud<pcl::PointNormal>);
+  // Calculate normals with the small scale
+  std::cout << "Calculating normals for scale..." << scale1_ << std::endl;
+  pcl::PointCloud<pcl::PointNormal>::Ptr normals_small_scale (new pcl::PointCloud<pcl::PointNormal>);
 
-  // ne.setRadiusSearch (scale1_);
-  // ne.compute (*normals_small_scale);
+  ne.setRadiusSearch (scale1_);
+  ne.compute (*normals_small_scale);
 
-  // // Calculate normals with the large scale
-  // std::cout << "Calculating normals for scale..." << scale2_ << std::endl;
-  // pcl::PointCloud<pcl::PointNormal>::Ptr normals_large_scale (new pcl::PointCloud<pcl::PointNormal>);
+  // Calculate normals with the large scale
+  std::cout << "Calculating normals for scale..." << scale2_ << std::endl;
+  pcl::PointCloud<pcl::PointNormal>::Ptr normals_large_scale (new pcl::PointCloud<pcl::PointNormal>);
 
-  // ne.setRadiusSearch (scale2_);
-  // ne.compute (*normals_large_scale);
+  ne.setRadiusSearch (scale2_);
+  ne.compute (*normals_large_scale);
 
-  // // Create output cloud for Difference of Normals (DoN) results
-  // pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud (new pcl::PointCloud<pcl::PointNormal>);
-  // pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *don_cloud);
+  // Create output cloud for Difference of Normals (DoN) results
+  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *don_cloud);
 
-  // ///////////////////////////////////
-  // // COMPUTE DIFFERENCE OF NORMALS //
-  // ///////////////////////////////////
+  ///////////////////////////////////
+  // COMPUTE DIFFERENCE OF NORMALS //
+  ///////////////////////////////////
 
-  // // Create DoN operator
-  // std::cout << "Calculating DoN... " << std::endl;
-  // pcl::DifferenceOfNormalsEstimation<pcl::PointXYZ, pcl::PointNormal, pcl::PointNormal> don;
+  // Create DoN operator
+  std::cout << "Calculating DoN... " << std::endl;
+  pcl::DifferenceOfNormalsEstimation<pcl::PointXYZ, pcl::PointNormal, pcl::PointNormal> don;
 
-  // don.setInputCloud (cloud);
-  // don.setNormalScaleLarge (normals_large_scale);
-  // don.setNormalScaleSmall (normals_small_scale);
+  don.setInputCloud (cloud);
+  don.setNormalScaleLarge (normals_large_scale);
+  don.setNormalScaleSmall (normals_small_scale);
 
-  // // Check if can initialize DoN feature operator
-  // if (!don.initCompute ())
-  // {
-  //   std::cerr << "Error: Could not initialize DoN feature operator" << std::endl;
-  //   exit (EXIT_FAILURE);
-  // }
+  // Check if can initialize DoN feature operator
+  if (!don.initCompute ())
+  {
+    std::cerr << "Error: Could not initialize DoN feature operator" << std::endl;
+    exit (EXIT_FAILURE);
+  }
 
-  // // Compute DoN
-  // don.computeFeature (*don_cloud);
+  // Compute DoN
+  don.computeFeature (*don_cloud);
 
-  // // Build the condition for filtering
-  // std::cout << "Filtering out DoN mag <= " << threshold_ << "..." << std::endl;
+  // Build the condition for filtering
+  std::cout << "Filtering out DoN mag <= " << threshold_ << "..." << std::endl;
 
-  // pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointNormal> () );
-  // range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, threshold_)) );
+  pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointNormal> () );
+  range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, threshold_)) );
   
-  // // Build the filter
-  // pcl::ConditionalRemoval<pcl::PointNormal> condrem;
-  // condrem.setCondition (range_cond);
-  // condrem.setInputCloud (don_cloud);
+  // Build the filter
+  pcl::ConditionalRemoval<pcl::PointNormal> condrem;
+  condrem.setCondition (range_cond);
+  condrem.setInputCloud (don_cloud);
 
-  // pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered_normals (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered_normals (new pcl::PointCloud<pcl::PointNormal>);
 
-  // // Apply filter
-  // condrem.filter (*don_cloud_filtered_normals);
+  // Apply filter
+  condrem.filter (*don_cloud_filtered_normals);
 
-  // // Print size of filtered output
-  // std::cout << "Filtered Pointcloud: " << don_cloud_filtered_normals->points.size () << " data points." << std::endl;
+  // Print size of filtered output
+  std::cout << "Filtered Pointcloud: " << don_cloud_filtered_normals->points.size () << " data points." << std::endl;
 
 
 
@@ -168,25 +168,25 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // BUILD SEARCH TREE //
   ///////////////////////
 
-  if (cloud->isOrganized ())
+  if (don_cloud_filtered_normals->isOrganized ())
   {
-    tree2.reset (new pcl::search::OrganizedNeighbor<pcl::PointXYZ> ());
+    tree2.reset (new pcl::search::OrganizedNeighbor<pcl::PointNormal> ());
   }
   else
   {
     // Use KDTree for non-organized data
-    tree2.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
+    tree2.reset (new pcl::search::KdTree<pcl::PointNormal> (false));
   }
 
   // Set input pointcloud for search tree
-  tree2->setInputCloud (cloud);
+  tree2->setInputCloud (don_cloud_filtered_normals);
 
   /////////////////////
   // COMPUTE NORMALS //
   /////////////////////
 
-  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne2;
-  ne2.setInputCloud (cloud);
+  pcl::NormalEstimationOMP<pcl::PointNormal, pcl::PointNormal> ne2;
+  ne2.setInputCloud (don_cloud_filtered_normals);
   ne2.setSearchMethod (tree2);
 
   // Set viewpoint, very important so normals are all pointed in the same direction
@@ -194,16 +194,16 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud2 (new pcl::PointCloud<pcl::PointNormal>);
 
-  ne2.setRadiusSearch (scale1_);
+  ne2.setRadiusSearch (0.02);
   ne2.compute (*don_cloud2);
 
   // Assignment part
-  for (int i = 0; i < cloud->points.size(); i++)
+  for (int i = 0; i < don_cloud_filtered_normals->points.size(); i++)
   {
 
-    don_cloud2->points[i].x = cloud->points[i].x;
-    don_cloud2->points[i].y = cloud->points[i].y;
-    don_cloud2->points[i].z = cloud->points[i].z;
+    don_cloud2->points[i].x = don_cloud_filtered_normals->points[i].x;
+    don_cloud2->points[i].y = don_cloud_filtered_normals->points[i].y;
+    don_cloud2->points[i].z = don_cloud_filtered_normals->points[i].z;
   }
 
   pcl::ConditionAnd<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionAnd<pcl::PointNormal> () );
@@ -224,6 +224,9 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // Apply filter
   condrem2.filter (*don_cloud_filtered_normals2);
 
+  // ADD FILTER FOR CURVATURE!!!!!!!!!!!!
+  
+
   // Need to fuse together PointNormal data with PointXYZ
   // https://stackoverflow.com/questions/34400656/how-can-i-compute-a-normal-for-each-point-in-cloud
 
@@ -237,7 +240,6 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //
   //////////////////////////////////
-
 
   // Estimate the feature
   PointCloudOut output;
