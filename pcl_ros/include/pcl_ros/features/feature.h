@@ -95,11 +95,18 @@ namespace pcl_ros
       KdTreePtr tree_;
 
       /** \brief The number of K nearest neighbors to use for each point. */
-      int k_;
+      int k_; 
 
-      float scale1_;
-      float scale2_;
-      float threshold_;
+      float don_radius_1_;
+      float don_radius_2_;
+      float don_threshold_;
+      float normal_radius_;
+      float normal_x_min_threshold_;
+      float normal_x_max_threshold_;
+      float normal_y_min_threshold_;
+      float normal_y_max_threshold_;
+      float normal_z_min_threshold_;
+      float normal_z_max_threshold_;
       
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;

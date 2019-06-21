@@ -189,20 +189,55 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     search_radius_ = config.radius_search;
     NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
   }
-  if (scale1_ != config.scale1)
+  if (don_radius_1_ != config.don_radius_1)
   {
-    scale1_ = config.scale1;
-    NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
+    don_radius_1_ = config.don_radius_1;
+    NODELET_DEBUG ("[config_callback] Setting the small radius of the difference of normal estimator: %f.", don_radius_1_);
   }
-  if (scale2_ != config.scale2)
+  if (don_radius_2_ != config.don_radius_2)
   {
-    scale2_ = config.scale2;
-    NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
+    don_radius_2_ = config.don_radius_2;
+    NODELET_DEBUG ("[config_callback] Setting the large radius of the difference of normal estimator: %f.", don_radius_2_);
   }
-  if (threshold_ != config.threshold)
+  if (don_threshold_ != config.don_threshold)
   {
-    threshold_ = config.threshold;
-    NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
+    don_threshold_ = config.don_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the difference of normal threshold: %f.", don_threshold_);
+  }
+  if (normal_radius_ != config.normal_radius)
+  {
+    normal_radius_ = config.normal_radius;
+    NODELET_DEBUG ("[config_callback] Setting the radius of the normal estimator: %f.", normal_radius_);
+  }
+  if (normal_x_min_threshold_ != config.normal_x_min_threshold)
+  {
+    normal_x_min_threshold_ = config.normal_x_min_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the minimum x-direction normal threshold: %f.", normal_x_min_threshold_);
+  }
+  if (normal_x_max_threshold_ != config.normal_x_max_threshold)
+  {
+    normal_x_max_threshold_ = config.normal_x_max_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the maximum x-direction normal threshold: %f.", normal_x_max_threshold_);
+  }
+  if (normal_y_min_threshold_ != config.normal_y_min_threshold)
+  {
+    normal_y_min_threshold_ = config.normal_y_min_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the minimum x-direction normal threshold: %f.", normal_y_min_threshold_);
+  }
+  if (normal_y_max_threshold_ != config.normal_y_max_threshold)
+  {
+    normal_y_max_threshold_ = config.normal_y_max_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the maximum x-direction normal threshold: %f.", normal_y_max_threshold_);
+  }
+  if (normal_z_min_threshold_ != config.normal_z_min_threshold)
+  {
+    normal_z_min_threshold_ = config.normal_z_min_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the minimum x-direction normal threshold: %f.", normal_z_min_threshold_);
+  }
+  if (normal_z_max_threshold_ != config.normal_z_max_threshold)
+  {
+    normal_z_max_threshold_ = config.normal_z_max_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the maximum x-direction normal threshold: %f.", normal_z_max_threshold_);
   }
 }
 

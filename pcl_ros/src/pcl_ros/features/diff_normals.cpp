@@ -81,7 +81,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   tree->setInputCloud (cloud);
 
   // Check if small scale is smaller than large scale 
-  if (scale1_ >= scale2_)
+  if (don_radius_1_ >= don_radius_2_)
   {
     std::cerr << "Error: Large scale must be > small scale!" << std::endl;
     exit (EXIT_FAILURE);
@@ -99,17 +99,17 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   ne.setViewPoint (std::numeric_limits<float>::max (), std::numeric_limits<float>::max (), std::numeric_limits<float>::max ());
 
   // Calculate normals with the small scale
-  std::cout << "Calculating normals for scale..." << scale1_ << std::endl;
+  std::cout << "Calculating normals for scale..." << don_radius_1_ << std::endl;
   pcl::PointCloud<pcl::PointNormal>::Ptr normals_small_scale (new pcl::PointCloud<pcl::PointNormal>);
 
-  ne.setRadiusSearch (scale1_);
+  ne.setRadiusSearch (don_radius_1_);
   ne.compute (*normals_small_scale);
 
   // Calculate normals with the large scale
-  std::cout << "Calculating normals for scale..." << scale2_ << std::endl;
+  std::cout << "Calculating normals for scale..." << don_radius_2_ << std::endl;
   pcl::PointCloud<pcl::PointNormal>::Ptr normals_large_scale (new pcl::PointCloud<pcl::PointNormal>);
 
-  ne.setRadiusSearch (scale2_);
+  ne.setRadiusSearch (don_radius_2_);
   ne.compute (*normals_large_scale);
 
   // Create output cloud for Difference of Normals (DoN) results
@@ -139,10 +139,10 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   don.computeFeature (*don_cloud);
 
   // Build the condition for filtering
-  std::cout << "Filtering out DoN mag <= " << threshold_ << "..." << std::endl;
+  std::cout << "Filtering out DoN mag <= " << don_threshold_ << "..." << std::endl;
 
   pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointNormal> () );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, threshold_)) );
+  range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, don_threshold_)) );
   
   // Build the filter
   pcl::ConditionalRemoval<pcl::PointNormal> condrem;
@@ -194,7 +194,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud2 (new pcl::PointCloud<pcl::PointNormal>);
 
-  ne2.setRadiusSearch (0.02);
+  ne2.setRadiusSearch (0.1); // 0.02
   ne2.compute (*don_cloud2);
 
   // Assignment part
@@ -208,11 +208,19 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   pcl::ConditionAnd<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionAnd<pcl::PointNormal> () );
   
+  
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, -0.1)) );
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT,  0.1)) );  
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT,  0.98)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::GT, -0.1)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::LT,  0.1)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::GT,  0.98)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::LT,  9.99)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT, -0.1)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::LT,  0.1)) );
+
+  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, -0.1)) );
+  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT,  0.1)) );  
+  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT,  0.98)) );
+  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::GT, -0.1)) );
+  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::LT,  0.1)) );
 
   // Build the filter
   pcl::ConditionalRemoval<pcl::PointNormal> condrem2;
