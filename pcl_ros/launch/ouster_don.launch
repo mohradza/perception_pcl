@@ -7,8 +7,8 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
       filter_field_name: x
-      filter_limit_min: -20
-      filter_limit_max: 20
+      filter_limit_min: 0
+      filter_limit_max: 5
       filter_limit_negative: False
       leaf_size: 0.02
     </rosparam>
@@ -20,8 +20,8 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
     <rosparam>
       filter_field_name: y
-      filter_limit_min: -20
-      filter_limit_max: 20
+      filter_limit_min: -1
+      filter_limit_max: 1
       filter_limit_negative: False
       leaf_size: 0.02
     </rosparam>
@@ -45,6 +45,8 @@
     <remap from="~input" to="/voxel_grid_z/output" />
     <rosparam>
       # -[ Mandatory parameters
+      mls_polynomial_order:     1
+      mls_radius_search:        0.05
       k_search:                 0.00
       radius_search:            0.00
       don_radius_1:             0.02 <!--  0.02 -->

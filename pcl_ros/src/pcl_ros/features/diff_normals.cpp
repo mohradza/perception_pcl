@@ -49,6 +49,8 @@
 
 #include <pcl/features/don.h>
 
+#include <pcl/surface/mls.h>
+
 void 
 pcl_ros::DiffNormals::emptyPublish (const PointCloudInConstPtr &cloud)
 {
@@ -63,36 +65,49 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
                                            const IndicesPtr &indices)
 {
 
-  ///////////////////////
-  // BUILD SEARCH TREE //
-  ///////////////////////
+  /////////////////////
+  // SMOOTH SURFACES //
+  /////////////////////
 
-  if (cloud->isOrganized ())
-  {
-    tree.reset (new pcl::search::OrganizedNeighbor<pcl::PointXYZ> ());
-  }
-  else
-  {
-    // Use KDTree for non-organized dataPointNormal
-    tree.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
-  }
+  // Create a KD-Tree
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree0 (new pcl::search::KdTree<pcl::PointXYZ>);
+
+  // Output has the PointNormal type in order to store the normals calculated by MLS
+  pcl::PointCloud<pcl::PointNormal>::Ptr mls_points (new pcl::PointCloud<pcl::PointNormal>);
+
+  // Init object (second point type is for the normals, even if unused)
+  pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
+ 
+  mls.setComputeNormals (true);
+
+  // Set parameters
+  mls.setInputCloud (cloud);
+  mls.setPolynomialOrder (mls_polynomial_order_);
+  mls.setSearchMethod (tree0);
+  mls.setSearchRadius (mls_radius_search_);
+
+  // Reconstruct
+  mls.process (*mls_points);
+
+  /////////////////////////////////////
+  // FILTER BY DIFFERENCE OF NORMALS //
+  /////////////////////////////////////
+
+  // Create a KD-Tree
+  pcl::search::KdTree<pcl::PointNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointNormal>);
 
   // Set input pointcloud for search tree
-  tree->setInputCloud (cloud);
+  tree->setInputCloud (mls_points);
 
-  // Check if small scale is smaller than large scale 
+  // Check if small scale is smaller than large scale
   if (don_radius_1_ >= don_radius_2_)
   {
     std::cerr << "Error: Large scale must be > small scale!" << std::endl;
     exit (EXIT_FAILURE);
   }
 
-  /////////////////////
-  // COMPUTE NORMALS //
-  /////////////////////
-
-  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne;
-  ne.setInputCloud (cloud);
+  pcl::NormalEstimationOMP<pcl::PointNormal, pcl::PointNormal> ne;
+  ne.setInputCloud (mls_points);
   ne.setSearchMethod (tree);
 
   // Set viewpoint, very important so normals are all pointed in the same direction
@@ -114,17 +129,13 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   // Create output cloud for Difference of Normals (DoN) results
   pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud (new pcl::PointCloud<pcl::PointNormal>);
-  pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *don_cloud);
-
-  ///////////////////////////////////
-  // COMPUTE DIFFERENCE OF NORMALS //
-  ///////////////////////////////////
+  pcl::copyPointCloud<pcl::PointNormal, pcl::PointNormal>(*mls_points, *don_cloud);
 
   // Create DoN operator
   std::cout << "Calculating DoN... " << std::endl;
-  pcl::DifferenceOfNormalsEstimation<pcl::PointXYZ, pcl::PointNormal, pcl::PointNormal> don;
+  pcl::DifferenceOfNormalsEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PointNormal> don;
 
-  don.setInputCloud (cloud);
+  don.setInputCloud (mls_points);
   don.setNormalScaleLarge (normals_large_scale);
   don.setNormalScaleSmall (normals_small_scale);
 
@@ -157,15 +168,8 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // Print size of filtered output
   std::cout << "Filtered Pointcloud: " << don_cloud_filtered_normals->points.size () << " data points." << std::endl;
 
-
-
-
-
-
-
-
   ///////////////////////
-  // BUILD SEARCH TREE //
+  // FILTER BY NORMALS //
   ///////////////////////
 
   if (don_cloud_filtered_normals->isOrganized ())
@@ -180,10 +184,6 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   // Set input pointcloud for search tree
   tree2->setInputCloud (don_cloud_filtered_normals);
-
-  /////////////////////
-  // COMPUTE NORMALS //
-  /////////////////////
 
   pcl::NormalEstimationOMP<pcl::PointNormal, pcl::PointNormal> ne2;
   ne2.setInputCloud (don_cloud_filtered_normals);
@@ -207,8 +207,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   }
 
   pcl::ConditionAnd<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionAnd<pcl::PointNormal> () );
-  
-  
+    
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, normal_x_min_threshold_)) );
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT, normal_x_max_threshold_)) );  
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT, normal_y_min_threshold_)) );

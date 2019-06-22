@@ -97,6 +97,8 @@ namespace pcl_ros
       /** \brief The number of K nearest neighbors to use for each point. */
       int k_; 
 
+      int mls_polynomial_order_;
+      float mls_radius_search_;
       float don_radius_1_;
       float don_radius_2_;
       float don_threshold_;
