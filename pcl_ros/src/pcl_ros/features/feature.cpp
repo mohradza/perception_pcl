@@ -179,16 +179,6 @@ pcl_ros::Feature::unsubscribe ()
 void
 pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
 {
-  if (mls_polynomial_order_ != config.mls_polynomial_order)
-  {
-    mls_polynomial_order_ = config.mls_polynomial_order;
-    NODELET_DEBUG ("[config_callback] Setting the minimum curvature threshold: %f.", mls_polynomial_order_);
-  }
-  if (mls_radius_search_ != config.mls_radius_search)
-  {
-    mls_radius_search_ = config.mls_radius_search;
-    NODELET_DEBUG ("[config_callback] Setting the maximum curvature threshold: %f.", mls_radius_search_);
-  }
   if (k_ != config.k_search)
   {
     k_ = config.k_search;

@@ -45,8 +45,6 @@
     <remap from="~input" to="/voxel_grid_z/output" />
     <rosparam>
       # -[ Mandatory parameters
-      mls_polynomial_order:     1
-      mls_radius_search:        0.05
       k_search:                 0.00
       radius_search:            0.00
       don_radius_1:             0.02 <!--  0.02 -->

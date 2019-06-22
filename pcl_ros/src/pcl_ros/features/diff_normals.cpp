@@ -65,39 +65,23 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
                                            const IndicesPtr &indices)
 {
 
-  /////////////////////
-  // SMOOTH SURFACES //
-  /////////////////////
-
-  // Create a KD-Tree
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree0 (new pcl::search::KdTree<pcl::PointXYZ>);
-
-  // Output has the PointNormal type in order to store the normals calculated by MLS
-  pcl::PointCloud<pcl::PointNormal>::Ptr mls_points (new pcl::PointCloud<pcl::PointNormal>);
-
-  // Init object (second point type is for the normals, even if unused)
-  pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
- 
-  mls.setComputeNormals (true);
-
-  // Set parameters
-  mls.setInputCloud (cloud);
-  mls.setPolynomialOrder (mls_polynomial_order_);
-  mls.setSearchMethod (tree0);
-  mls.setSearchRadius (mls_radius_search_);
-
-  // Reconstruct
-  mls.process (*mls_points);
-
   /////////////////////////////////////
   // FILTER BY DIFFERENCE OF NORMALS //
   /////////////////////////////////////
 
   // Create a KD-Tree
-  pcl::search::KdTree<pcl::PointNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointNormal>);
+  if (cloud->isOrganized ())
+  {
+    tree.reset (new pcl::search::OrganizedNeighbor<pcl::PointXYZ> ());
+  }
+  else
+  {
+    // Use KDTree for non-organized dataPointNormal
+    tree.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
+  }
 
   // Set input pointcloud for search tree
-  tree->setInputCloud (mls_points);
+  tree->setInputCloud (cloud);
 
   // Check if small scale is smaller than large scale
   if (don_radius_1_ >= don_radius_2_)
@@ -106,8 +90,8 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
     exit (EXIT_FAILURE);
   }
 
-  pcl::NormalEstimationOMP<pcl::PointNormal, pcl::PointNormal> ne;
-  ne.setInputCloud (mls_points);
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne;
+  ne.setInputCloud (cloud);
   ne.setSearchMethod (tree);
 
   // Set viewpoint, very important so normals are all pointed in the same direction
@@ -129,13 +113,13 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   // Create output cloud for Difference of Normals (DoN) results
   pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud (new pcl::PointCloud<pcl::PointNormal>);
-  pcl::copyPointCloud<pcl::PointNormal, pcl::PointNormal>(*mls_points, *don_cloud);
+  pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *don_cloud);
 
   // Create DoN operator
   std::cout << "Calculating DoN... " << std::endl;
-  pcl::DifferenceOfNormalsEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PointNormal> don;
+  pcl::DifferenceOfNormalsEstimation<pcl::PointXYZ, pcl::PointNormal, pcl::PointNormal> don;
 
-  don.setInputCloud (mls_points);
+  don.setInputCloud (cloud);
   don.setNormalScaleLarge (normals_large_scale);
   don.setNormalScaleSmall (normals_small_scale);
 
