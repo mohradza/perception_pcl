@@ -51,19 +51,32 @@
 
 #include <pcl/surface/mls.h>
 
+#include "pcl_ros/transforms.h"
+#include <pcl/filters/statistical_outlier_removal.h>
+
 void 
-pcl_ros::DiffNormals::emptyPublish (const PointCloudInConstPtr &cloud)
+pcl_ros::DiffNormals::emptyPublish (const PointCloudInConstPtr &cloud_in)
 {
   PointCloudOut output;
-  output.header = cloud->header;
+  output.header = cloud_in->header;
   pub_output_.publish (output.makeShared ());
 }
 
 void 
-pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
+pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
                                            const PointCloudInConstPtr &surface,
                                            const IndicesPtr &indices)
 {
+
+// pcl_ros::transformPointCloud	(	const pcl::PointCloud< PointT > & 	cloud_in,
+//                                 pcl::PointCloud< PointT > & 	cloud_out,
+//                                 const tf::Transform & 	transform)		
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+tf::Transform transform;
+tf::Quaternion q;
+transform.setRotation( tf::createQuaternionFromRPY(-M_PI/2,0,0) );
+pcl_ros::transformPointCloud	(	*cloud_in, *cloud, transform);
 
   // /////////////////////////////////////
   // // FILTER BY DIFFERENCE OF NORMALS //
@@ -186,7 +199,6 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // Assignment part
   for (int i = 0; i < cloud->points.size(); i++)
   {
-
     don_cloud2->points[i].x = cloud->points[i].x;
     don_cloud2->points[i].y = cloud->points[i].y;
     don_cloud2->points[i].z = cloud->points[i].z;
@@ -203,12 +215,6 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, curvature_LT_threshold_)) );
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::GT, curvature_GT_threshold_)) );
 
-  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, -0.1)) );
-  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT,  0.1)) );  
-  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT,  0.98)) );
-  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::GT, -0.1)) );
-  // range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::LT,  0.1)) );
-
   // Build the filter
   pcl::ConditionalRemoval<pcl::PointNormal> condrem2;
   condrem2.setCondition (range_cond2);
@@ -218,9 +224,6 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
 
   // Apply filter
   condrem2.filter (*don_cloud_filtered_normals2);
-
-  // ADD FILTER FOR CURVATURE!!!!!!!!!!!!
-  
 
   // Need to fuse together PointNormal data with PointXYZ
   // https://stackoverflow.com/questions/34400656/how-can-i-compute-a-normal-for-each-point-in-cloud
@@ -232,13 +235,24 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud,
   // http://meshlabstuff.blogspot.com/2009/09/meshing-point-clouds.html
   // https://pixinsight.com/developer/pcl/doc/html/classpcl_1_1SurfaceSpline.html
 
+  //////////////////
+  // REDUCE NOISE //
+  //////////////////
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_filtered_sor (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::StatisticalOutlierRemoval<pcl::PointNormal> sor;
+  sor.setInputCloud (don_cloud_filtered_normals2);
+  sor.setMeanK (50);
+  sor.setStddevMulThresh (1.0);
+  sor.filter (*cloud_filtered_sor);
+
   //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //
   //////////////////////////////////
 
   // Estimate the feature
   PointCloudOut output;
-  output = *don_cloud_filtered_normals2;
+  output = *cloud_filtered_sor;
 
   // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud->header;
