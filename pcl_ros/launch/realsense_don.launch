@@ -53,6 +53,9 @@
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
+      transform_pcl_roll:       -1.57079632679
+      transform_pcl_pitch:      0.00
+      transform_pcl_yaw:        0.00
       don_radius_1:             0.03
       don_radius_2:             0.30
       don_LT_threshold:         0.00

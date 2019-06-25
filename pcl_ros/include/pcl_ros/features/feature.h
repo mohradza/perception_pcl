@@ -97,6 +97,9 @@ namespace pcl_ros
       /** \brief The number of K nearest neighbors to use for each point. */
       int k_; 
 
+      float transform_pcl_roll_;
+      float transform_pcl_pitch_;
+      float transform_pcl_yaw_;
       float don_radius_1_;
       float don_radius_2_;
       float don_LT_threshold_;

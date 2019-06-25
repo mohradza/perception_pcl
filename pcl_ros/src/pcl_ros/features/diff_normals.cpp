@@ -68,15 +68,17 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
                                            const IndicesPtr &indices)
 {
 
-// pcl_ros::transformPointCloud	(	const pcl::PointCloud< PointT > & 	cloud_in,
-//                                 pcl::PointCloud< PointT > & 	cloud_out,
-//                                 const tf::Transform & 	transform)		
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-tf::Transform transform;
-tf::Quaternion q;
-transform.setRotation( tf::createQuaternionFromRPY(-M_PI/2,0,0) );
-pcl_ros::transformPointCloud	(	*cloud_in, *cloud, transform);
+
+  /////////////////////////////////
+  // TRANSFORM INPUT POINT CLOUD //
+  /////////////////////////////////
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  tf::Transform transform;
+  tf::Quaternion q;
+  transform.setRotation( tf::createQuaternionFromRPY(transform_pcl_roll_, transform_pcl_pitch_, transform_pcl_yaw_) );
+  pcl_ros::transformPointCloud	(	*cloud_in, *cloud, transform);
 
   // /////////////////////////////////////
   // // FILTER BY DIFFERENCE OF NORMALS //

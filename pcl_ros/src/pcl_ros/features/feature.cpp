@@ -189,6 +189,21 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     search_radius_ = config.radius_search;
     NODELET_DEBUG ("[config_callback] Setting the nearest neighbors search radius for each point: %f.", search_radius_);
   }
+  if (transform_pcl_roll_ != config.transform_pcl_roll)
+  {
+    transform_pcl_roll_ = config.transform_pcl_roll;
+    NODELET_DEBUG ("[config_callback] Setting the roll angle for transformation of input point cloud: %f.", transform_pcl_roll_);
+  }
+  if (transform_pcl_pitch_ != config.transform_pcl_pitch)
+  {
+    transform_pcl_pitch_ = config.transform_pcl_pitch;
+    NODELET_DEBUG ("[config_callback] Setting the pitch angle for transformation of input point cloud: %f.", transform_pcl_pitch_);
+  }
+  if (transform_pcl_yaw_ != config.transform_pcl_yaw)
+  {
+    transform_pcl_yaw_ = config.transform_pcl_yaw;
+    NODELET_DEBUG ("[config_callback] Setting the yaw angle for transformation of input point cloud: %f.", transform_pcl_yaw_);
+  }
   if (don_radius_1_ != config.don_radius_1)
   {
     don_radius_1_ = config.don_radius_1;

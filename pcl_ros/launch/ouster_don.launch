@@ -1,64 +1,73 @@
 <launch>
-  <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+    <arg name="camera"      default="camera"/>
+    <arg name="bond"        default="false" />
+    <arg name="respawn"     default="$(arg bond)" />
+    <arg name="manager"     default="terrain_manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen" />
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid pcl_manager" output="screen">
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid $(arg manager)" output="screen">
     <remap from="~input" to="/os1_node/points"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
       filter_field_name: x
-      filter_limit_min: 0
-      filter_limit_max: 5
+      filter_limit_min: -100
+      filter_limit_max:  100
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_y" args="load pcl/VoxelGrid pcl_manager" output="screen">
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_y" args="load pcl/VoxelGrid $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_x/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
     <rosparam>
       filter_field_name: y
-      filter_limit_min: -1
-      filter_limit_max: 1
+      filter_limit_min: -100
+      filter_limit_max:  100
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_z" args="load pcl/VoxelGrid pcl_manager" output="screen">
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_z" args="load pcl/VoxelGrid $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_y/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
     <rosparam>
       filter_field_name: z
-      filter_limit_min: -1
-      filter_limit_max:  0
+      filter_limit_min: -100
+      filter_limit_max:  100
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
   <!-- Estimate point normals -->
-  <node pkg="nodelet" type="nodelet" name="don" args="load pcl/DiffNormals pcl_manager" output="screen">
+  <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/DiffNormals $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_z/output" />
     <rosparam>
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
+      transform_pcl_roll:       0.00
+      transform_pcl_pitch:      0.00
+      transform_pcl_yaw:        0.00
       don_radius_1:             0.02
       don_radius_2:             1.00
       don_threshold:            0.01
-      normal_radius:            0.02
-      normal_x_min_threshold:  -0.20
-      normal_x_max_threshold:   0.20
-      normal_y_min_threshold:  -0.20
-      normal_y_max_threshold:   0.20
-      normal_z_min_threshold:   0.98
-      normal_z_max_threshold:   1.00
-      curvature_min_threshold:  0.00
-      curvature_max_threshold:  0.01
+      normal_radius:            0.05
+      normal_x_LT_threshold:   -0.30
+      normal_x_GT_threshold:    0.30
+      normal_y_LT_threshold:   -0.30
+      normal_y_GT_threshold:    0.30
+      normal_z_LT_threshold:    0.94
+      normal_z_GT_threshold:    1.00
+      curvature_LT_threshold:   0.00
+      curvature_GT_threshold:   0.002
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
     </rosparam>
