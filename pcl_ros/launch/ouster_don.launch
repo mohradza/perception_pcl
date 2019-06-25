@@ -47,16 +47,16 @@
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
-      don_radius_1:             0.02 <!--  0.02 -->
-      don_radius_2:             1.00 <!--  0.75 -->
-      don_threshold:            0.01 <!--  0.001 -->
-      normal_radius:            0.02 <!--  0.05 -->
-      normal_x_min_threshold:  -0.20 <!-- -0.10 -->
-      normal_x_max_threshold:   0.20 <!--  0.10 -->
-      normal_y_min_threshold:  -0.20 <!-- -0.10 -->
-      normal_y_max_threshold:   0.20 <!--  0.10 -->
-      normal_z_min_threshold:   0.98 <!--  0.98 -->
-      normal_z_max_threshold:   1.00 <!--  9.99 -->
+      don_radius_1:             0.02
+      don_radius_2:             1.00
+      don_threshold:            0.01
+      normal_radius:            0.02
+      normal_x_min_threshold:  -0.20
+      normal_x_max_threshold:   0.20
+      normal_y_min_threshold:  -0.20
+      normal_y_max_threshold:   0.20
+      normal_z_min_threshold:   0.98
+      normal_z_max_threshold:   1.00
       curvature_min_threshold:  0.00
       curvature_max_threshold:  0.01
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)

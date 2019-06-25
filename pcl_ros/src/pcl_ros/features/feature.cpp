@@ -199,55 +199,60 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     don_radius_2_ = config.don_radius_2;
     NODELET_DEBUG ("[config_callback] Setting the large radius of the difference of normal estimator: %f.", don_radius_2_);
   }
-  if (don_threshold_ != config.don_threshold)
+  if (don_LT_threshold_ != config.don_LT_threshold)
   {
-    don_threshold_ = config.don_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the difference of normal threshold: %f.", don_threshold_);
+    don_LT_threshold_ = config.don_LT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the difference of normal less-than threshold: %f.", don_LT_threshold_);
+  }
+  if (don_LT_threshold_ != config.don_LT_threshold)
+  {
+    don_LT_threshold_ = config.don_LT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the difference of normal less-than threshold: %f.", don_LT_threshold_);
   }
   if (normal_radius_ != config.normal_radius)
   {
     normal_radius_ = config.normal_radius;
     NODELET_DEBUG ("[config_callback] Setting the radius of the normal estimator: %f.", normal_radius_);
   }
-  if (normal_x_min_threshold_ != config.normal_x_min_threshold)
+  if (normal_x_LT_threshold_ != config.normal_x_LT_threshold)
   {
-    normal_x_min_threshold_ = config.normal_x_min_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the minimum x-direction normal threshold: %f.", normal_x_min_threshold_);
+    normal_x_LT_threshold_ = config.normal_x_LT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the x-direction less-than normal threshold: %f.", normal_x_LT_threshold_);
   }
-  if (normal_x_max_threshold_ != config.normal_x_max_threshold)
+  if (normal_x_GT_threshold_ != config.normal_x_GT_threshold)
   {
-    normal_x_max_threshold_ = config.normal_x_max_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the maximum x-direction normal threshold: %f.", normal_x_max_threshold_);
+    normal_x_GT_threshold_ = config.normal_x_GT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the x-direction greater-than normal threshold: %f.", normal_x_GT_threshold_);
   }
-  if (normal_y_min_threshold_ != config.normal_y_min_threshold)
+  if (normal_y_LT_threshold_ != config.normal_y_LT_threshold)
   {
-    normal_y_min_threshold_ = config.normal_y_min_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the minimum x-direction normal threshold: %f.", normal_y_min_threshold_);
+    normal_y_LT_threshold_ = config.normal_y_LT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the x-direction less-than normal threshold: %f.", normal_y_LT_threshold_);
   }
-  if (normal_y_max_threshold_ != config.normal_y_max_threshold)
+  if (normal_y_GT_threshold_ != config.normal_y_GT_threshold)
   {
-    normal_y_max_threshold_ = config.normal_y_max_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the maximum x-direction normal threshold: %f.", normal_y_max_threshold_);
+    normal_y_GT_threshold_ = config.normal_y_GT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the x-direction greater-than normal threshold: %f.", normal_y_GT_threshold_);
   }
-  if (normal_z_min_threshold_ != config.normal_z_min_threshold)
+  if (normal_z_LT_threshold_ != config.normal_z_LT_threshold)
   {
-    normal_z_min_threshold_ = config.normal_z_min_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the minimum x-direction normal threshold: %f.", normal_z_min_threshold_);
+    normal_z_LT_threshold_ = config.normal_z_LT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the x-direction less-than normal threshold: %f.", normal_z_LT_threshold_);
   }
-  if (normal_z_max_threshold_ != config.normal_z_max_threshold)
+  if (normal_z_GT_threshold_ != config.normal_z_GT_threshold)
   {
-    normal_z_max_threshold_ = config.normal_z_max_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the maximum x-direction normal threshold: %f.", normal_z_max_threshold_);
+    normal_z_GT_threshold_ = config.normal_z_GT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the x-direction greater-than normal threshold: %f.", normal_z_GT_threshold_);
   }
-  if (curvature_min_threshold_ != config.curvature_min_threshold)
+  if (curvature_LT_threshold_ != config.curvature_LT_threshold)
   {
-    curvature_min_threshold_ = config.curvature_min_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the minimum curvature threshold: %f.", curvature_min_threshold_);
+    curvature_LT_threshold_ = config.curvature_LT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the curvature less-than threshold: %f.", curvature_LT_threshold_);
   }
-  if (curvature_max_threshold_ != config.curvature_max_threshold)
+  if (curvature_GT_threshold_ != config.curvature_GT_threshold)
   {
-    curvature_max_threshold_ = config.curvature_max_threshold;
-    NODELET_DEBUG ("[config_callback] Setting the maximum curvature threshold: %f.", curvature_max_threshold_);
+    curvature_GT_threshold_ = config.curvature_GT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the curvature greater-than threshold: %f.", curvature_GT_threshold_);
   }
 }
 

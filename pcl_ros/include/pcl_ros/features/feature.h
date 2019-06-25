@@ -99,16 +99,17 @@ namespace pcl_ros
 
       float don_radius_1_;
       float don_radius_2_;
-      float don_threshold_;
+      float don_LT_threshold_;
+      float don_GT_threshold_;
       float normal_radius_;
-      float normal_x_min_threshold_;
-      float normal_x_max_threshold_;
-      float normal_y_min_threshold_;
-      float normal_y_max_threshold_;
-      float normal_z_min_threshold_;
-      float normal_z_max_threshold_;
-      float curvature_min_threshold_;
-      float curvature_max_threshold_;
+      float normal_x_LT_threshold_;
+      float normal_x_GT_threshold_;
+      float normal_y_LT_threshold_;
+      float normal_y_GT_threshold_;
+      float normal_z_LT_threshold_;
+      float normal_z_GT_threshold_;
+      float curvature_LT_threshold_;
+      float curvature_GT_threshold_;
       
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;
