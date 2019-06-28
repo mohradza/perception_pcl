@@ -207,7 +207,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
     don_cloud2->points[i].z = cloud->points[i].z;
     if(!(std::isnan(don_cloud2->points[i].normal_x + don_cloud2->points[i].normal_y)))
     {
-      don_cloud2->points[i].intensity = std::max(std::min(don_cloud2->points[i].normal_x + don_cloud2->points[i].normal_y,max_val),-max_val);
+      don_cloud2->points[i].intensity = std::abs(don_cloud2->points[i].normal_x) + std::abs(don_cloud2->points[i].normal_y);
     }
 
   }
