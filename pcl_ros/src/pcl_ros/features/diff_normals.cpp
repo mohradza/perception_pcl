@@ -91,7 +91,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
   // }
   // else
   // {
-  //   // Use KDTree for non-organized dataPointNormal
+  //   // Use KDTree for non-organized dataPointXYZINormal
   //   tree.reset (new pcl::search::KdTree<pcl::PointXYZ> (false));
   // }
 
@@ -105,7 +105,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
   //   exit (EXIT_FAILURE);
   // }
 
-  // pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne;
+  // pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointXYZINormal> ne;
   // ne.setInputCloud (cloud);
   // ne.setSearchMethod (tree);
 
@@ -114,25 +114,25 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
 
   // // Calculate normals with the small scale
   // std::cout << "Calculating normals for scale..." << don_radius_1_ << std::endl;
-  // pcl::PointCloud<pcl::PointNormal>::Ptr normals_small_scale (new pcl::PointCloud<pcl::PointNormal>);
+  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr normals_small_scale (new pcl::PointCloud<pcl::PointXYZINormal>);
 
   // ne.setRadiusSearch (don_radius_1_);
   // ne.compute (*normals_small_scale);
 
   // // Calculate normals with the large scale
   // std::cout << "Calculating normals for scale..." << don_radius_2_ << std::endl;
-  // pcl::PointCloud<pcl::PointNormal>::Ptr normals_large_scale (new pcl::PointCloud<pcl::PointNormal>);
+  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr normals_large_scale (new pcl::PointCloud<pcl::PointXYZINormal>);
 
   // ne.setRadiusSearch (don_radius_2_);
   // ne.compute (*normals_large_scale);
 
   // // Create output cloud for Difference of Normals (DoN) results
-  // pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud (new pcl::PointCloud<pcl::PointNormal>);
-  // pcl::copyPointCloud<pcl::PointXYZ, pcl::PointNormal>(*cloud, *don_cloud);
+  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr don_cloud (new pcl::PointCloud<pcl::PointXYZINormal>);
+  // pcl::copyPointCloud<pcl::PointXYZ, pcl::PointXYZINormal>(*cloud, *don_cloud);
 
   // // Create DoN operator
   // std::cout << "Calculating DoN... " << std::endl;
-  // pcl::DifferenceOfNormalsEstimation<pcl::PointXYZ, pcl::PointNormal, pcl::PointNormal> don;
+  // pcl::DifferenceOfNormalsEstimation<pcl::PointXYZ, pcl::PointXYZINormal, pcl::PointXYZINormal> don;
 
   // don.setInputCloud (cloud);
   // don.setNormalScaleLarge (normals_large_scale);
@@ -152,16 +152,16 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
   // std::cout << "Filtering out DoN mag < " << don_LT_threshold_ << "..." << std::endl;
   // std::cout << "Filtering out DoN mag > " << don_GT_threshold_ << "..." << std::endl;
 
-  // pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointNormal> () );
-  // range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, don_LT_threshold_)) );
-  // range_cond->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::GT, don_GT_threshold_)) );
+  // pcl::ConditionOr<pcl::PointXYZINormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointXYZINormal> () );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::LT, don_LT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::GT, don_GT_threshold_)) );
   
   // // Build the filter
-  // pcl::ConditionalRemoval<pcl::PointNormal> condrem;
+  // pcl::ConditionalRemoval<pcl::PointXYZINormal> condrem;
   // condrem.setCondition (range_cond);
   // condrem.setInputCloud (don_cloud);
 
-  // pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered_normals (new pcl::PointCloud<pcl::PointNormal>);
+  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr don_cloud_filtered_normals (new pcl::PointCloud<pcl::PointXYZINormal>);
 
   // // Apply filter
   // condrem.filter (*don_cloud_filtered_normals);
@@ -186,48 +186,54 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
   // Set input pointcloud for search tree
   tree2->setInputCloud (cloud);
 
-  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> ne2;
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointXYZINormal> ne2;
   ne2.setInputCloud (cloud);
   ne2.setSearchMethod (tree2);
 
   // Set viewpoint, very important so normals are all pointed in the same direction
   ne2.setViewPoint (std::numeric_limits<float>::max (), std::numeric_limits<float>::max (), std::numeric_limits<float>::max ());
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud2 (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PointCloud<pcl::PointXYZINormal>::Ptr don_cloud2 (new pcl::PointCloud<pcl::PointXYZINormal>);
 
   ne2.setRadiusSearch (normal_radius_);
   ne2.compute (*don_cloud2);
 
+  float max_val = 10;
   // Assignment part
   for (int i = 0; i < cloud->points.size(); i++)
   {
     don_cloud2->points[i].x = cloud->points[i].x;
     don_cloud2->points[i].y = cloud->points[i].y;
     don_cloud2->points[i].z = cloud->points[i].z;
+    if(!(std::isnan(don_cloud2->points[i].normal_x + don_cloud2->points[i].normal_y)))
+    {
+      don_cloud2->points[i].intensity = std::max(std::min(don_cloud2->points[i].normal_x + don_cloud2->points[i].normal_y,max_val),-max_val);
+    }
+
   }
 
-  pcl::ConditionOr<pcl::PointNormal>::Ptr range_cond2 ( new pcl::ConditionOr<pcl::PointNormal> () );
+  pcl::ConditionOr<pcl::PointXYZINormal>::Ptr range_cond2 ( new pcl::ConditionOr<pcl::PointXYZINormal> () );
     
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::LT, normal_x_LT_threshold_)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_x", pcl::ComparisonOps::GT, normal_x_GT_threshold_)) );  
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::LT, normal_y_LT_threshold_)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_y", pcl::ComparisonOps::GT, normal_y_GT_threshold_)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::LT, normal_z_LT_threshold_)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("normal_z", pcl::ComparisonOps::GT, normal_z_GT_threshold_)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::LT, curvature_LT_threshold_)) );
-  range_cond2->addComparison (pcl::FieldComparison<pcl::PointNormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointNormal> ("curvature", pcl::ComparisonOps::GT, curvature_GT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_x", pcl::ComparisonOps::LT, normal_x_LT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_x", pcl::ComparisonOps::GT, normal_x_GT_threshold_)) );  
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_y", pcl::ComparisonOps::LT, normal_y_LT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_y", pcl::ComparisonOps::GT, normal_y_GT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_z", pcl::ComparisonOps::LT, normal_z_LT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_z", pcl::ComparisonOps::GT, normal_z_GT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::LT, curvature_LT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::GT, curvature_GT_threshold_)) );
 
   // Build the filter
-  pcl::ConditionalRemoval<pcl::PointNormal> condrem2;
+  pcl::ConditionalRemoval<pcl::PointXYZINormal> condrem2;
   condrem2.setCondition (range_cond2);
   condrem2.setInputCloud (don_cloud2);
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr don_cloud_filtered_normals2 (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PointCloud<pcl::PointXYZINormal>::Ptr don_cloud_filtered_normals2 (new pcl::PointCloud<pcl::PointXYZINormal>);
 
   // Apply filter
   condrem2.filter (*don_cloud_filtered_normals2);
 
-  // Need to fuse together PointNormal data with PointXYZ
+  // Need to fuse together PointXYZINormal data with PointXYZ
   // https://stackoverflow.com/questions/34400656/how-can-i-compute-a-normal-for-each-point-in-cloud
 
   // Line 48: http://docs.pointclouds.org/1.7.0/normal__3d_8hpp_source.html
@@ -241,12 +247,83 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
   // REDUCE NOISE //
   //////////////////
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_filtered_sor (new pcl::PointCloud<pcl::PointNormal>);
-  pcl::StatisticalOutlierRemoval<pcl::PointNormal> sor;
+  pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_filtered_sor (new pcl::PointCloud<pcl::PointXYZINormal>);
+  pcl::StatisticalOutlierRemoval<pcl::PointXYZINormal> sor;
   sor.setInputCloud (don_cloud_filtered_normals2);
   sor.setMeanK (50);
   sor.setStddevMulThresh (1.0);
   sor.filter (*cloud_filtered_sor);
+
+  // //////// NEW STUFF
+
+
+  // // Create output cloud for Difference of Normals (DoN) results
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr xyz_cloud_filtered_sor (new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::copyPointCloud<pcl::PointXYZINormal, pcl::PointXYZ>(*don_cloud2, *xyz_cloud_filtered_sor);
+
+
+  // float x;
+
+  // pcl::PointCloud<pcl::PointXYZI> cost_map;
+  
+
+  // pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+  // kdtree.setInputCloud (xyz_cloud_filtered_sor);
+  // float radius = 0.25;
+  // std::vector<int> pointIdxRadiusSearch; //to store index of surrounding points 
+  // std::vector<float> pointRadiusSquaredDistance; // to store distance to surrounding points
+
+  // for (size_t i = 0; i < 20; ++i)
+  // { 
+
+  //   for (size_t j = 0; j < 20; ++j)
+  //   { 
+    
+  //     for (size_t k = 0; k < 20; ++k)
+  //     { 
+
+  //       pcl::PointXYZ searchPoint(-5 + i*0.5,-5 + j*0.5,-5 + k*0.5);
+  //       if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
+  //       {
+          
+  //         for (size_t l = 0; l < pointIdxRadiusSearch.size (); ++l)
+  //         {
+          
+  //           pcl::PointXYZI point;
+  //           point.x = don_cloud2->points[ pointIdxRadiusSearch[l] ].x;
+  //           point.y = don_cloud2->points[ pointIdxRadiusSearch[l] ].y;
+  //           point.z = don_cloud2->points[ pointIdxRadiusSearch[l] ].z;
+  //           point.intensity = don_cloud2->points[ pointIdxRadiusSearch[l] ].normal_y + don_cloud2->points[ pointIdxRadiusSearch[l] ].normal_y + 10 * don_cloud2->points[ pointIdxRadiusSearch[l] ].curvature;
+  //           cost_map.points.push_back(point);
+
+  //           // std::cout << "    "  <<   cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].normal_x 
+  //           //           << " " << cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].normal_y 
+  //           //           << " " << cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].normal_z 
+  //           //           << " " << cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].curvature 
+  //           //           << " (squared distance: " << pointRadiusSquaredDistance[i] << ")" << std::endl;
+  //         }
+
+  //       }
+
+  //     }
+
+  //   }
+
+  // }
+
+  // didnt work
+
+  // std::vector < pcl::PointCloud<pcl::PointXYZ>::Ptr, Eigen::aligned_allocator <pcl::PointCloud <pcl::PointXYZ>::Ptr > > data;
+  // data = cloud->points;
+
+
+
+  // for (int i = 0; i < pointIdxRadiusSearch.size(); i++)
+  // {
+  //   don_cloud2->points[i].x = cloud->points[i].x;
+  //   don_cloud2->points[i].y = cloud->points[i].y;
+  //   don_cloud2->points[i].z = cloud->points[i].z;
+  // }
 
   //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //
@@ -254,7 +331,7 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
 
   // Estimate the feature
   PointCloudOut output;
-  output = *cloud_filtered_sor;
+  output = *don_cloud2;
 
   // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud->header;

@@ -74,7 +74,7 @@ namespace pcl_ros
       pcl::search::Search<pcl::PointXYZ>::Ptr tree;
       pcl::search::Search<pcl::PointXYZ>::Ptr tree2;
 
-      typedef pcl::PointCloud<pcl::PointNormal> PointCloudOut;
+      typedef pcl::PointCloud<pcl::PointXYZINormal> PointCloudOut;
 
       /** \brief Child initialization routine. Internal method. */
       inline bool 
