@@ -14,8 +14,8 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
       filter_field_name: x
-      filter_limit_min: -10
-      filter_limit_max:  10
+      filter_limit_min: -0.5 <!-- -10 -->
+      filter_limit_max:  0.5 <!--  10 -->
       filter_limit_negative: False
       leaf_size: 0.02
     </rosparam>
@@ -28,7 +28,7 @@
     <rosparam>
       filter_field_name: y
       filter_limit_min: 0
-      filter_limit_max: 1
+      filter_limit_max: 1 <!--  10 -->
       filter_limit_negative: False
       leaf_size: 0.02
     </rosparam>
@@ -41,7 +41,7 @@
     <rosparam>
       filter_field_name: z
       filter_limit_min:  0
-      filter_limit_max:  10
+      filter_limit_max:  2
       filter_limit_negative: False
       leaf_size: 0.02
     </rosparam>
