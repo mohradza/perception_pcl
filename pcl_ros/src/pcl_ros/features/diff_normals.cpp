@@ -68,8 +68,6 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
                                            const IndicesPtr &indices)
 {
 
-
-
   /////////////////////////////////
   // TRANSFORM INPUT POINT CLOUD //
   /////////////////////////////////
@@ -222,6 +220,8 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_z", pcl::ComparisonOps::GT, normal_z_GT_threshold_)) );
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::LT, curvature_LT_threshold_)) );
   range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::GT, curvature_GT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("intensity", pcl::ComparisonOps::LT, intensity_LT_threshold_)) );
+  range_cond2->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("intensity", pcl::ComparisonOps::GT, intensity_GT_threshold_)) );
 
   // Build the filter
   pcl::ConditionalRemoval<pcl::PointXYZINormal> condrem2;
@@ -325,13 +325,72 @@ pcl_ros::DiffNormals::computePublish (const PointCloudInConstPtr &cloud_in,
   //   don_cloud2->points[i].z = cloud->points[i].z;
   // }
 
+  //////////////////////////
+  // CLUSTER POINT CLOUDS //
+  //////////////////////////
+
+  double segradius = 0.5;
+
+  // Filter by magnitude
+  std::cout << "Clustering using EuclideanClusterExtraction with tolerance <= " << segradius << "..." <<  std::endl;
+
+  pcl::search::KdTree<pcl::PointXYZINormal>::Ptr segtree (new pcl::search::KdTree<pcl::PointXYZINormal>);
+  segtree->setInputCloud (cloud_filtered_sor);
+
+  std::vector<pcl::PointIndices> cluster_indices;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZINormal> ec;
+
+  ec.setClusterTolerance (segradius);
+  ec.setMinClusterSize (50);
+  ec.setMaxClusterSize (100000);
+  ec.setSearchMethod (segtree);
+  ec.setInputCloud (cloud_filtered_sor);
+  ec.extract (cluster_indices);
+
+  std::vector<pcl::PointCloud<pcl::PointXYZINormal>::Ptr> points_cluster(cluster_indices.size ());
+  pcl::PointCloud<pcl::PointXYZINormal>::Ptr temp (new pcl::PointCloud<pcl::PointXYZINormal>); 
+
+
+
+
+
+
+  // // points_cluster(cluster_indices.size ()); 
+  // for (int ii=0;ii<cluster_indices.size ();ii++) 
+  // { 
+  //     points_cluster[ii]= new pcl::PointCloud<pcl::PointXYZINormal>(); 
+  // } 
+
+
+
+
+
+  // int j = 0;
+  // for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it, j++)
+  // {
+  //   pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_cluster_don (new pcl::PointCloud<pcl::PointXYZINormal>);
+  //   for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+  //   {
+  //     cloud_cluster_don->points.push_back (cloud_filtered_sor->points[*pit]);
+  //     points_cluster[it]->points.push_back (cloud_filtered_sor->points[*pit]);
+  //   }
+
+  //   cloud_cluster_don->width = int (cloud_cluster_don->points.size ());
+  //   cloud_cluster_don->height = 1;
+  //   cloud_cluster_don->is_dense = true;
+
+  //   //Save cluster
+  //   std::cout << "PointCloud representing the Cluster: " << cloud_cluster_don->points.size () << " data points." << std::endl;
+  //   writer.write<pcl::PointXYZINormal> (ss.str (), *cloud_cluster_don, false);
+  // }
+
   //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //
   //////////////////////////////////
 
   // Estimate the feature
   PointCloudOut output;
-  output = *don_cloud2;
+  output = *cloud_filtered_sor;
 
   // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud->header;

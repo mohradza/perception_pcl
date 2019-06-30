@@ -68,6 +68,8 @@
       normal_z_GT_threshold:    1.00
       curvature_LT_threshold:   0.00
       curvature_GT_threshold:   0.002
+      intensity_LT_threshold:   0.00
+      intensity_GT_threshold:   1000
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
     </rosparam>

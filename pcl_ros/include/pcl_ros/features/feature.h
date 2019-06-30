@@ -113,6 +113,8 @@ namespace pcl_ros
       float normal_z_GT_threshold_;
       float curvature_LT_threshold_;
       float curvature_GT_threshold_;
+      float intensity_LT_threshold_;
+      float intensity_GT_threshold_;
       
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;

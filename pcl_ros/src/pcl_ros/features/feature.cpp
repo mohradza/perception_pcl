@@ -269,6 +269,16 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     curvature_GT_threshold_ = config.curvature_GT_threshold;
     NODELET_DEBUG ("[config_callback] Setting the curvature greater-than threshold: %f.", curvature_GT_threshold_);
   }
+  if (intensity_LT_threshold_ != config.intensity_LT_threshold)
+  {
+    intensity_LT_threshold_ = config.intensity_LT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the intensity greater-than threshold: %f.", intensity_LT_threshold_);
+  }
+  if (intensity_GT_threshold_ != config.intensity_GT_threshold)
+  {
+    intensity_GT_threshold_ = config.intensity_GT_threshold;
+    NODELET_DEBUG ("[config_callback] Setting the intensity greater-than threshold: %f.", intensity_GT_threshold_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
