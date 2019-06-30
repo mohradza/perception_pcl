@@ -279,6 +279,16 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     intensity_GT_threshold_ = config.intensity_GT_threshold;
     NODELET_DEBUG ("[config_callback] Setting the intensity greater-than threshold: %f.", intensity_GT_threshold_);
   }
+  if (sor_nearest_neighbors_ != config.sor_nearest_neighbors)
+  {
+    sor_nearest_neighbors_ = config.sor_nearest_neighbors;
+    NODELET_DEBUG ("[config_callback] Setting the number of nearest neighbors to use for mean distance estimation: %f.", sor_nearest_neighbors_);
+  }
+  if (sor_std_dev_multiplier_ != config.sor_std_dev_multiplier)
+  {
+    sor_std_dev_multiplier_ = config.sor_std_dev_multiplier;
+    NODELET_DEBUG ("[config_callback] Setting the standard deviation multiplier for the distance threshold calculation: %f.", sor_std_dev_multiplier_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

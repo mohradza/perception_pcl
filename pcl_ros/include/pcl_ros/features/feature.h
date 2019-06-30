@@ -115,6 +115,8 @@ namespace pcl_ros
       float curvature_GT_threshold_;
       float intensity_LT_threshold_;
       float intensity_GT_threshold_;
+      float sor_nearest_neighbors_;
+      float sor_std_dev_multiplier_;
       
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;

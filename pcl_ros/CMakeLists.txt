@@ -81,7 +81,7 @@ generate_dynamic_reconfigure_options(
   cfg/RadiusOutlierRemoval.cfg
   cfg/VoxelGrid.cfg
   cfg/CropBox.cfg
-  cfg/DiffNormals.cfg
+  cfg/Obstacles.cfg
 )
 
 ## Declare the catkin package
@@ -146,7 +146,7 @@ add_library(pcl_ros_features
   src/pcl_ros/features/pfh.cpp
   src/pcl_ros/features/principal_curvatures.cpp
   src/pcl_ros/features/vfh.cpp
-  src/pcl_ros/features/diff_normals.cpp
+  src/pcl_ros/features/obstacles.cpp
 )
 target_link_libraries (pcl_ros_features ${Boost_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(pcl_ros_features ${PROJECT_NAME}_gencfg)

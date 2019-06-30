@@ -48,7 +48,7 @@
   </node>
 
   <!-- Estimate point normals -->
-  <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/DiffNormals $(arg manager)" output="screen">
+  <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/Obstacles $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_z/output" />
     <rosparam>
       # -[ Mandatory parameters
@@ -72,6 +72,8 @@
       curvature_GT_threshold:   1000 <!-- 0.002 -->
       intensity_LT_threshold:   0.00
       intensity_GT_threshold:   1000
+      sor_nearest_neighbors:      50
+      sor_std_dev_multiplier:      1
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
     </rosparam>

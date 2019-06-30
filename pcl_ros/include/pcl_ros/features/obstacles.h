@@ -40,8 +40,6 @@
 
 #include <pcl/features/normal_3d.h>
 #include "pcl_ros/features/feature.h"
-
-
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/organized.h>
@@ -49,21 +47,20 @@
 #include <pcl/search/search.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/filters/conditional_removal.h>
-#include <pcl/segmentation/extract_clusters.h>
 
 namespace pcl_ros
 {
-  /** \brief @b DiffNormals estimates local surface properties at each 3D point, such as surface normals and
+  /** \brief @b Obstacles estimates local surface properties at each 3D point, such as surface normals and
     * curvatures.
     *
     * @note The code is stateful as we do not expect this class to be multicore parallelized. Please look at
-    * \a DiffNormalsOpenMP and \a DiffNormals for parallel implementations.
+    * \a ObstaclesOpenMP and \a Obstacles for parallel implementations.
     * \author Radu Bogdan Rusu
     */
 
 
   
-  class DiffNormals: public Feature
+  class Obstacles: public Feature
   {
     private:
 
@@ -91,15 +88,6 @@ namespace pcl_ros
       void computePublish (const PointCloudInConstPtr &cloud,
                            const PointCloudInConstPtr &surface,
                            const IndicesPtr &indices);
-
-      template<typename PointInT, typename PointNT, typename PointOutT> 
-      void filterForObstacles(
-        const pcl::PointCloud<PointNT> & cloud,
-        std::vector<int> &indices_to_use,
-        std::vector<int> &indices_out,
-        std::vector<int> &indices_in,
-        float threshold
-      );
 
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW  
