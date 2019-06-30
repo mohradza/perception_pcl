@@ -67,12 +67,9 @@ namespace pcl_ros
   {
     private:
 
-
-
       /** \brief PCL implementation object. */
       pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> impl_;
-      pcl::search::Search<pcl::PointXYZ>::Ptr tree;
-      pcl::search::Search<pcl::PointXYZ>::Ptr tree2;
+      pcl::search::Search<pcl::PointXYZ>::Ptr tree_xyz;
 
       typedef pcl::PointCloud<pcl::PointXYZINormal> PointCloudOut;
 
@@ -96,7 +93,7 @@ namespace pcl_ros
                            const IndicesPtr &indices);
 
       template<typename PointInT, typename PointNT, typename PointOutT> 
-      void filterNormalsWithHighCurvature(
+      void filterForObstacles(
         const pcl::PointCloud<PointNT> & cloud,
         std::vector<int> &indices_to_use,
         std::vector<int> &indices_out,
