@@ -117,6 +117,8 @@ namespace pcl_ros
       float intensity_GT_threshold_;
       float sor_nearest_neighbors_;
       float sor_std_dev_multiplier_;
+      float ror_radius_;
+      float ror_min_neighbors_;
       
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;

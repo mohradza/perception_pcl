@@ -47,6 +47,7 @@
 #include <pcl/features/don.h>
 #include "pcl_ros/transforms.h"
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/radius_outlier_removal.h>
 
 void 
 pcl_ros::Obstacles::emptyPublish (const PointCloudInConstPtr &cloud_in)
@@ -111,7 +112,7 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
     if(!(std::isnan(cloud_ne->points[i].normal_x + cloud_ne->points[i].normal_y)))
     {
       // Define cost to traverse terrain and assign to intensity field 
-      cloud_ne->points[i].intensity = std::abs(cloud_ne->points[i].normal_x) + std::abs(cloud_ne->points[i].normal_y);
+      cloud_ne->points[i].intensity = (cloud_ne->points[i].normal_x) * (cloud_ne->points[i].normal_x) + (cloud_ne->points[i].normal_y) * (cloud_ne->points[i].normal_y);
     }
 
   }
@@ -150,6 +151,14 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   sor.setMeanK (sor_nearest_neighbors_); // Set the number of nearest neighbors to use for mean distance estimation
   sor.setStddevMulThresh (sor_std_dev_multiplier_); // Set the standard deviation multiplier for the distance threshold calculation
   sor.filter (*cloud_sor);
+
+  // build the filter
+  pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_ror (new pcl::PointCloud<pcl::PointXYZINormal>);
+  pcl::RadiusOutlierRemoval<pcl::PointXYZINormal> ror;
+  ror.setInputCloud(cloud_sor);
+  ror.setRadiusSearch(ror_radius_);
+  ror.setMinNeighborsInRadius (ror_min_neighbors_);
+  ror.filter (*cloud_ror);
 
   //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //

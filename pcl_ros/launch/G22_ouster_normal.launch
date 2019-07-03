@@ -1,24 +1,22 @@
 <launch>
-<!--   
-  <include file="$(find realsense2_camera)/launch/G22_fwd_rs_depth.launch"/>
--->
-  <arg name="camera"      default="camera"/>
-  <arg name="bond"        default="false" />
-  <arg name="respawn"     default="$(arg bond)" />
-  <arg name="manager"     default="terrain_manager"/>
+
+    <arg name="camera"      default="camera"/>
+    <arg name="bond"        default="false" />
+    <arg name="respawn"     default="$(arg bond)" />
+    <arg name="manager"     default="terrain_manager"/>
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen" />
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
   <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid $(arg manager)" output="screen">
-    <remap from="~input" to="/depth/depth_registered/points"/>
+    <remap from="~input" to="/os1_node/points"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
       filter_field_name: x
-      filter_limit_min: -10 <!-- -10 -->
-      filter_limit_max:  10 <!--  10 -->
+      filter_limit_min: -100
+      filter_limit_max:  100
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
@@ -28,10 +26,10 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
     <rosparam>
       filter_field_name: y
-      filter_limit_min: -10
-      filter_limit_max:  10 <!--  10 -->
+      filter_limit_min: -100
+      filter_limit_max:  100
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
@@ -41,10 +39,10 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
     <rosparam>
       filter_field_name: z
-      filter_limit_min:  -10
-      filter_limit_max:   10
+      filter_limit_min: -100
+      filter_limit_max:  100
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
@@ -52,29 +50,31 @@
   <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/Obstacles $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_z/output" />
     <rosparam>
+    
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
-      transform_pcl_roll:       -1.57079632679
+      transform_pcl_roll:       0.00
       transform_pcl_pitch:      0.00
       transform_pcl_yaw:        0.00
-      don_radius_1:             0.03
-      don_radius_2:             0.30
-      don_LT_threshold:         0.00
-      don_GT_threshold:         0.10
-      normal_radius:            0.05
-      normal_x_LT_threshold:   -0.30 <!-- -0.30 -->
-      normal_x_GT_threshold:    0.30 <!--  0.30 -->
-      normal_y_LT_threshold:   -0.30 <!-- -0.30 -->
-      normal_y_GT_threshold:    0.30 <!--  0.30 -->
-      normal_z_LT_threshold:    0.956 <!--  0.94 -->
+      don_radius_1:             0.02
+      don_radius_2:             1.00
+      don_threshold:            0.01
+      normal_radius:            0.08 <!-- paper  0.08 -->
+      normal_x_LT_threshold:   -0.50 <!-- paper -0.30 -->
+      normal_x_GT_threshold:    0.50 <!-- paper  0.30 -->
+      normal_y_LT_threshold:   -0.50 <!-- paper -0.30 -->
+      normal_y_GT_threshold:    0.50 <!-- paper  0.30 -->
+      normal_z_LT_threshold:    0.866 <!-- paper -0.956 -->
       normal_z_GT_threshold:    1.00
-      curvature_LT_threshold:   0.00 <!-- 0.000 -->
-      curvature_GT_threshold:   1000 <!-- 0.002 -->
+      curvature_LT_threshold:   0.00
+      curvature_GT_threshold:   1000
       intensity_LT_threshold:   0.00
       intensity_GT_threshold:   1000
-      sor_nearest_neighbors:      50
+      sor_nearest_neighbors:       1
       sor_std_dev_multiplier:      1
+      ror_radius:               10.0
+      ror_min_neighbors:          10
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
     </rosparam>
@@ -86,14 +86,14 @@
       args="load pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet $(arg manager)"
       name="pcl2laser">
 
-      <param name="target_frame" type="str" value="depth_color_optical_frame" />
+      <param name="target_frame" type="str" value="os1" />
       <param name="min_height" type="double" value="-10.0" />
       <param name="max_height" type="double" value="10.0" />
       <param name="min_range" type="double" value="0" />
       <param name="max_range" type="double" value="1000" />
-      <param name="angle_min" type="double" value="1.1780972451" />
-      <param name="angle_max" type="double" value="1.96349540849" />
-      <param name="angle_increment" type="double" value="0.00436332312" />
+      <param name="angle_min" type="double" value="-0.78539816339" />
+      <param name="angle_max" type="double" value="0.78539816339" />
+      <param name="angle_increment" type="double" value="0.03490658503" />
       <param name="use_inf" type="boolean" value="true" />
 
       <remap from="cloud_in" to="terrain_assessment/output"/>

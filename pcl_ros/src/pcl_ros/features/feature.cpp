@@ -289,6 +289,16 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     sor_std_dev_multiplier_ = config.sor_std_dev_multiplier;
     NODELET_DEBUG ("[config_callback] Setting the standard deviation multiplier for the distance threshold calculation: %f.", sor_std_dev_multiplier_);
   }
+  if (ror_radius_ != config.ror_radius)
+  {
+    ror_radius_ = config.ror_radius;
+    NODELET_DEBUG ("[config_callback] Setting the search radius for radius outlier removal: %f.", ror_radius_);
+  }
+  if (ror_min_neighbors_ != config.ror_min_neighbors)
+  {
+    ror_min_neighbors_ = config.ror_min_neighbors;
+    NODELET_DEBUG ("[config_callback] Setting the minimum number of neighbors for radius outlier removal: %f.", ror_min_neighbors_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

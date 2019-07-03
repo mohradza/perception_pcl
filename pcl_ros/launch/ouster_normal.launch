@@ -50,6 +50,7 @@
   <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/Obstacles $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_z/output" />
     <rosparam>
+    
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
@@ -59,17 +60,19 @@
       don_radius_1:             0.02
       don_radius_2:             1.00
       don_threshold:            0.01
-      normal_radius:            0.05
-      normal_x_LT_threshold:   -0.30
-      normal_x_GT_threshold:    0.30
-      normal_y_LT_threshold:   -0.30
-      normal_y_GT_threshold:    0.30
-      normal_z_LT_threshold:    0.94
+      normal_radius:            0.12 <!-- paper 0.08 -->
+      normal_x_LT_threshold:   -0.40
+      normal_x_GT_threshold:    0.40
+      normal_y_LT_threshold:   -0.40
+      normal_y_GT_threshold:    0.40
+      normal_z_LT_threshold:    0.90
       normal_z_GT_threshold:    1.00
       curvature_LT_threshold:   0.00
-      curvature_GT_threshold:   0.002
+      curvature_GT_threshold:   1000
       intensity_LT_threshold:   0.00
       intensity_GT_threshold:   1000
+      sor_nearest_neighbors:      50
+      sor_std_dev_multiplier:      1
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
     </rosparam>
