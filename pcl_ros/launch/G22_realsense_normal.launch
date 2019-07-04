@@ -93,7 +93,7 @@
       <param name="max_range" type="double" value="1000" />
       <param name="angle_min" type="double" value="1.1780972451" />
       <param name="angle_max" type="double" value="1.96349540849" />
-      <param name="angle_increment" type="double" value="0.00436332312" />
+      <param name="angle_increment" type="double" value="0.0174533" />
       <param name="use_inf" type="boolean" value="true" />
 
       <remap from="cloud_in" to="terrain_assessment/output"/>
