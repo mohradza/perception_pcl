@@ -119,6 +119,7 @@ namespace pcl_ros
       float sor_std_dev_multiplier_;
       float ror_radius_;
       float ror_min_neighbors_;
+      float height_variance_radius_;
       
       /** \brief The nearest neighbors search radius for each point. */
       double search_radius_;

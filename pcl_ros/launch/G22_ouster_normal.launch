@@ -7,7 +7,7 @@
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen" />
 
-  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <!-- Run a VoxelGrid filter on x -->
   <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid $(arg manager)" output="screen">
     <remap from="~input" to="/os1_node/points"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
@@ -20,7 +20,7 @@
     </rosparam>
   </node>
 
-  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <!-- Run a VoxelGrid filter on y -->
   <node pkg="nodelet" type="nodelet" name="voxel_grid_y" args="load pcl/VoxelGrid $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_x/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
@@ -33,7 +33,7 @@
     </rosparam>
   </node>
 
-  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <!-- Run a VoxelGrid filter on z -->
   <node pkg="nodelet" type="nodelet" name="voxel_grid_z" args="load pcl/VoxelGrid $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_y/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
@@ -60,12 +60,12 @@
       don_radius_1:             0.02
       don_radius_2:             1.00
       don_threshold:            0.01
-      normal_radius:            0.08 <!-- paper  0.08 -->
+      normal_radius:            0.45 <!-- paper  0.08 -->
       normal_x_LT_threshold:   -0.50 <!-- paper -0.30 -->
       normal_x_GT_threshold:    0.50 <!-- paper  0.30 -->
       normal_y_LT_threshold:   -0.50 <!-- paper -0.30 -->
       normal_y_GT_threshold:    0.50 <!-- paper  0.30 -->
-      normal_z_LT_threshold:    0.866 <!-- paper -0.956 -->
+      normal_z_LT_threshold:    0.00 <!-- 30degrees 0.866 -->  <!-- paper -0.956 -->
       normal_z_GT_threshold:    1.00
       curvature_LT_threshold:   0.00
       curvature_GT_threshold:   1000
@@ -75,10 +75,36 @@
       sor_std_dev_multiplier:      1
       ror_radius:               10.0
       ror_min_neighbors:          10
+      height_variance_radius:   0.25
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
     </rosparam>
   </node>
+
+  <!-- Run a VoxelGrid filter on curvature (variance in height) proportional to roughness -->
+    <node pkg="nodelet" type="nodelet" name="voxel_grid_curv" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <remap from="~input" to="/terrain_assessment/output"/>
+    <rosparam>
+      filter_field_name: curvature
+      filter_limit_min:  0.005
+      filter_limit_max:  1000
+      filter_limit_negative: False
+      leaf_size: 0.05
+    </rosparam>
+  </node>
+
+    <!-- Run a VoxelGrid filter on intensity (slope of plane), 1 = traversable, 0 = untraversable -->
+    <node pkg="nodelet" type="nodelet" name="voxel_grid_intens" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <remap from="~input" to="/voxel_grid_curv/output"/>
+    <rosparam>
+      filter_field_name: intensity
+      filter_limit_min:  0.99
+      filter_limit_max:  1.01
+      filter_limit_negative: False
+      leaf_size: 0.05
+    </rosparam>
+  </node>
+
 
   <!-- PCL to Laserscan Nodelet -->
   <node pkg="nodelet" type="nodelet" output="screen"
@@ -96,7 +122,7 @@
       <param name="angle_increment" type="double" value="0.0174533" />
       <param name="use_inf" type="boolean" value="true" />
 
-      <remap from="cloud_in" to="terrain_assessment/output"/>
+      <remap from="cloud_in" to="/voxel_grid_intens/output"/>
       <remap from="scan" to="terrain_assessment/scan"/>
   </node>
 

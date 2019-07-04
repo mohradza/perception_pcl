@@ -58,8 +58,6 @@ namespace pcl_ros
     * \author Radu Bogdan Rusu
     */
 
-
-  
   class Obstacles: public Feature
   {
     private:
@@ -88,6 +86,8 @@ namespace pcl_ros
       void computePublish (const PointCloudInConstPtr &cloud,
                            const PointCloudInConstPtr &surface,
                            const IndicesPtr &indices);
+
+      void compute (PointCloudOut &output);
 
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW  

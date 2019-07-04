@@ -299,6 +299,11 @@ pcl_ros::Feature::config_callback (FeatureConfig &config, uint32_t level)
     ror_min_neighbors_ = config.ror_min_neighbors;
     NODELET_DEBUG ("[config_callback] Setting the minimum number of neighbors for radius outlier removal: %f.", ror_min_neighbors_);
   }
+  if (height_variance_radius_ != config.height_variance_radius)
+  {
+    height_variance_radius_ = config.height_variance_radius;
+    NODELET_DEBUG ("[config_callback] Setting the search radius for height variance calculation: %f.", height_variance_radius_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

@@ -48,6 +48,7 @@
 #include "pcl_ros/transforms.h"
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/search/pcl_search.h>
 
 void 
 pcl_ros::Obstacles::emptyPublish (const PointCloudInConstPtr &cloud_in)
@@ -75,7 +76,7 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   pcl_ros::transformPointCloud	(	*cloud_in, *cloud_in_transformed, transform);
 
   ///////////////////////
-  // FILTER BY NORMALS //
+  // CALCULATE NORMALS //
   ///////////////////////
 
   if (cloud_in_transformed->isOrganized ())
@@ -91,7 +92,8 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   // Set input pointcloud for search tree
   tree_xyz->setInputCloud (cloud_in_transformed);
 
-  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointXYZINormal> ne;
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointXYZINormal> ne; // parallel compute, uses just as much CPU
+  // pcl::NormalEstimation<pcl::PointXYZ, pcl::PointXYZINormal> ne;
   ne.setInputCloud (cloud_in_transformed);
   ne.setSearchMethod (tree_xyz);
 
@@ -103,62 +105,104 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   ne.setRadiusSearch (normal_radius_);
   ne.compute (*cloud_ne);
 
+
   // Assign original xyz data to normal estimate cloud (this is necessary because by default the xyz fields are empty)
   for (int i = 0; i < cloud_in_transformed->points.size(); i++)
   {
     cloud_ne->points[i].x = cloud_in_transformed->points[i].x;
     cloud_ne->points[i].y = cloud_in_transformed->points[i].y;
     cloud_ne->points[i].z = cloud_in_transformed->points[i].z;
-    if(!(std::isnan(cloud_ne->points[i].normal_x + cloud_ne->points[i].normal_y)))
+    if(!(std::isnan(cloud_ne->points[i].normal_z)))
     {
       // Define cost to traverse terrain and assign to intensity field 
-      cloud_ne->points[i].intensity = (cloud_ne->points[i].normal_x) * (cloud_ne->points[i].normal_x) + (cloud_ne->points[i].normal_y) * (cloud_ne->points[i].normal_y);
+      if(cloud_ne->points[i].normal_z > 0.866)
+      {
+        cloud_ne->points[i].intensity = 1;
+      }
     }
 
   }
 
-  // Create conditional object
-  pcl::ConditionOr<pcl::PointXYZINormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointXYZINormal> () );
+  //////////////////////////////////
+  // CALCULATE VARIANCE IN HEIGHT //
+  //////////////////////////////////
+
+  float traversability = 0;
+
+  // Set up KDTree
+  pcl::KdTreeFLANN<pcl::PointXYZINormal>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZINormal>);
+  tree->setInputCloud (cloud_ne);
+
+  // Neighbors containers
+  std::vector<int> k_indices; 
+  std::vector<float> k_distances;
+
+  float search_radius = height_variance_radius_;
+  float var;
+  
+  // Main Loop
+  for (int point_id = 0; point_id < cloud_ne->size (); ++point_id)
+  {
+
+    tree->radiusSearch (point_id, search_radius, k_indices, k_distances);
+
+    // For each neighbor
+    for (size_t n_id = 0; n_id < k_indices.size (); ++n_id)
+    {
+  
+      float id = k_indices.at (n_id);
+      var += (cloud_ne->points[id].z - cloud_ne->points[point_id].z) * (cloud_ne->points[id].z - cloud_ne->points[point_id].z);
+
+    }
+
+    var /= k_indices.size();
+    cloud_ne->points[point_id].curvature = var;
+
+  }
+
+
+  // // Create conditional object
+  // pcl::ConditionOr<pcl::PointXYZINormal>::Ptr range_cond ( new pcl::ConditionOr<pcl::PointXYZINormal> () );
     
-  // Add conditional statements
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_x",  pcl::ComparisonOps::LT, normal_x_LT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_x",  pcl::ComparisonOps::GT, normal_x_GT_threshold_)) );  
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_y",  pcl::ComparisonOps::LT, normal_y_LT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_y",  pcl::ComparisonOps::GT, normal_y_GT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_z",  pcl::ComparisonOps::LT, normal_z_LT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_z",  pcl::ComparisonOps::GT, normal_z_GT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::LT, curvature_LT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::GT, curvature_GT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("intensity", pcl::ComparisonOps::LT, intensity_LT_threshold_)) );
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("intensity", pcl::ComparisonOps::GT, intensity_GT_threshold_)) );
+  // // Add conditional statements
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_x",  pcl::ComparisonOps::LT, normal_x_LT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_x",  pcl::ComparisonOps::GT, normal_x_GT_threshold_)) );  
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_y",  pcl::ComparisonOps::LT, normal_y_LT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_y",  pcl::ComparisonOps::GT, normal_y_GT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_z",  pcl::ComparisonOps::LT, normal_z_LT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("normal_z",  pcl::ComparisonOps::GT, normal_z_GT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::LT, curvature_LT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("curvature", pcl::ComparisonOps::GT, curvature_GT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("intensity", pcl::ComparisonOps::LT, intensity_LT_threshold_)) );
+  // range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZINormal>::ConstPtr ( new pcl::FieldComparison<pcl::PointXYZINormal> ("intensity", pcl::ComparisonOps::GT, intensity_GT_threshold_)) );
 
-  // Build the filter
-  pcl::ConditionalRemoval<pcl::PointXYZINormal> condrem;
-  condrem.setCondition (range_cond);
-  condrem.setInputCloud (cloud_ne);
+  // // Build the filter
+  // pcl::ConditionalRemoval<pcl::PointXYZINormal> condrem;
+  // condrem.setCondition (range_cond);
+  // condrem.setInputCloud (cloud_ne);
 
-  // Apply filter
-  pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_condrem (new pcl::PointCloud<pcl::PointXYZINormal>);
-  condrem.filter (*cloud_condrem);
+  // // Apply filter
+  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_condrem (new pcl::PointCloud<pcl::PointXYZINormal>);
+  // condrem.filter (*cloud_condrem);
 
-  //////////////////
-  // REDUCE NOISE //
-  //////////////////
+  // //////////////////
+  // // REDUCE NOISE //
+  // //////////////////
 
-  pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_sor (new pcl::PointCloud<pcl::PointXYZINormal>);
-  pcl::StatisticalOutlierRemoval<pcl::PointXYZINormal> sor;
-  sor.setInputCloud (cloud_condrem);
-  sor.setMeanK (sor_nearest_neighbors_); // Set the number of nearest neighbors to use for mean distance estimation
-  sor.setStddevMulThresh (sor_std_dev_multiplier_); // Set the standard deviation multiplier for the distance threshold calculation
-  sor.filter (*cloud_sor);
+  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_sor (new pcl::PointCloud<pcl::PointXYZINormal>);
+  // pcl::StatisticalOutlierRemoval<pcl::PointXYZINormal> sor;
+  // sor.setInputCloud (cloud_condrem);
+  // sor.setMeanK (sor_nearest_neighbors_); // Set the number of nearest neighbors to use for mean distance estimation
+  // sor.setStddevMulThresh (sor_std_dev_multiplier_); // Set the standard deviation multiplier for the distance threshold calculation
+  // sor.filter (*cloud_sor);
 
-  // build the filter
-  pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_ror (new pcl::PointCloud<pcl::PointXYZINormal>);
-  pcl::RadiusOutlierRemoval<pcl::PointXYZINormal> ror;
-  ror.setInputCloud(cloud_sor);
-  ror.setRadiusSearch(ror_radius_);
-  ror.setMinNeighborsInRadius (ror_min_neighbors_);
-  ror.filter (*cloud_ror);
+  // // build the filter
+  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_ror (new pcl::PointCloud<pcl::PointXYZINormal>);
+  // pcl::RadiusOutlierRemoval<pcl::PointXYZINormal> ror;
+  // ror.setInputCloud(cloud_sor);
+  // ror.setRadiusSearch(ror_radius_);
+  // ror.setMinNeighborsInRadius (ror_min_neighbors_);
+  // ror.filter (*cloud_ror);
 
   //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //
@@ -166,7 +210,7 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
 
   // Estimate the feature
   PointCloudOut output;
-  output = *cloud_sor;
+  output = *cloud_ne;
 
   // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud_in_transformed->header;
