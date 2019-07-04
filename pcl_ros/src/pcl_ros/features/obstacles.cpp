@@ -160,64 +160,6 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   ror.setMinNeighborsInRadius (ror_min_neighbors_);
   ror.filter (*cloud_ror);
 
-
-   //////// NEW STUFF	
-
-
-   // Create output cloud for Difference of Normals (DoN) results	
-  pcl::PointCloud<pcl::PointXYZ>::Ptr xyz_cloud_filtered_sor (new pcl::PointCloud<pcl::PointXYZ>);	
-  pcl::copyPointCloud<pcl::PointXYZINormal, pcl::PointXYZ>(*cloud_sor, *xyz_cloud_filtered_sor);	
-
-  float x;	
-
-  pcl::PointCloud<pcl::PointXYZI> cost_map;	
-
-  pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;	
-  kdtree.setInputCloud (xyz_cloud_filtered_sor);	
-  float radius = 0.25;	
-  std::vector<int> pointIdxRadiusSearch; //to store index of surrounding points 	
-  std::vector<float> pointRadiusSquaredDistance; // to store distance to surrounding points	
-
-  float z[20][20][20];
-
-   for (size_t i = 0; i < 20; ++i)	
-  { 	
-
-     for (size_t j = 0; j < 20; ++j)	
-    { 	
-
-       for (size_t k = 0; k < 20; ++k)	
-      { 	
-
-         pcl::PointXYZ searchPoint(-5 + i*0.5,-5 + j*0.5,-5 + k*0.5);	
-        if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )	
-        {	
-
-           for (size_t l = 0; l < pointIdxRadiusSearch.size (); ++l)	
-          {	
-
-             pcl::PointXYZI point;	
-            point.x = cloud_sor->points[ pointIdxRadiusSearch[l] ].x;	
-            point.y = cloud_sor->points[ pointIdxRadiusSearch[l] ].y;	
-            point.z = cloud_sor->points[ pointIdxRadiusSearch[l] ].z;	
-            point.intensity = cloud_sor->points[ pointIdxRadiusSearch[l] ].normal_y + cloud_sor->points[ pointIdxRadiusSearch[l] ].normal_y + 10 * cloud_sor->points[ pointIdxRadiusSearch[l] ].curvature;	
-            cost_map.points.push_back(point);	
-
-             // std::cout << "    "  <<   cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].normal_x 	
-            //           << " " << cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].normal_y 	
-            //           << " " << cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].normal_z 	
-            //           << " " << cloud_filtered_sor->points[ pointIdxRadiusSearch[i] ].curvature 	
-            //           << " (squared distance: " << pointRadiusSquaredDistance[i] << ")" << std::endl;	
-          }	
-
-         }	
-
-       }	
-
-     }	
-
-   }	
-
   //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //
   //////////////////////////////////
