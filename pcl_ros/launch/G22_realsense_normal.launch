@@ -1,7 +1,5 @@
 <launch>
-<!--   
   <include file="$(find realsense2_camera)/launch/G22_fwd_rs_depth.launch"/>
--->
   <arg name="camera"      default="camera"/>
   <arg name="bond"        default="false" />
   <arg name="respawn"     default="$(arg bond)" />
