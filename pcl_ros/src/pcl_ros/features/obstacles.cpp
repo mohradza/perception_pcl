@@ -118,8 +118,6 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   // CALCULATE VARIANCE IN HEIGHT //
   //////////////////////////////////
 
-  float traversability = 0;
-
   // Set up KDTree
   pcl::KdTreeFLANN<pcl::PointXYZINormal>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZINormal>);
   tree->setInputCloud (cloud_ne);
@@ -186,21 +184,21 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   // sor.setStddevMulThresh (sor_std_dev_multiplier_); // Set the standard deviation multiplier for the distance threshold calculation
   // sor.filter (*cloud_sor);
 
-  // // build the filter
-  // pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_ror (new pcl::PointCloud<pcl::PointXYZINormal>);
-  // pcl::RadiusOutlierRemoval<pcl::PointXYZINormal> ror;
-  // ror.setInputCloud(cloud_sor);
-  // ror.setRadiusSearch(ror_radius_);
-  // ror.setMinNeighborsInRadius (ror_min_neighbors_);
-  // ror.filter (*cloud_ror);
+  // build the filter
+  pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_ror (new pcl::PointCloud<pcl::PointXYZINormal>);
+  pcl::RadiusOutlierRemoval<pcl::PointXYZINormal> ror;
+  ror.setInputCloud(cloud_condrem);
+  ror.setRadiusSearch(ror_radius_);
+  ror.setMinNeighborsInRadius (ror_min_neighbors_);
+  ror.filter (*cloud_ror);
 
-  ////////////////////////////////
+  //////////////////////////////////
   // PUBLISH FILTERED POINT CLOUD //
-  ////////////////////////////////
+  //////////////////////////////////
 
   // Estimate the feature
   PointCloudOut output;
-  output = *cloud_condrem;
+  output = *cloud_ror;
 
   // Publish a Boost shared ptr const data, enforce that the TF frame and the timestamp are copied
   output.header = cloud_in_transformed->header;

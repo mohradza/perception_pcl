@@ -1,8 +1,10 @@
 <launch>
 
+
+<!--
   <include file="/home/ohrad/catkin_ws/src/ouster_lidar/ouster_ros/os1.launch"/>
   <include file="$(find realsense2_camera)/launch/G22_fwd_rs_depth.launch"/>
-
+-->
     <arg name="camera"      default="camera"/>
     <arg name="bond"        default="false" />
     <arg name="respawn"     default="$(arg bond)" />
@@ -76,8 +78,8 @@
       intensity_GT_threshold:   1000
       sor_nearest_neighbors:       1
       sor_std_dev_multiplier:      1
-      ror_radius:               10.0
-      ror_min_neighbors:          10
+      ror_radius:               0.10
+      ror_min_neighbors:           3
       height_variance_radius:   0.25
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
