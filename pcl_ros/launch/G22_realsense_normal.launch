@@ -1,5 +1,9 @@
 <launch>
+
+<!-->
   <include file="$(find realsense2_camera)/launch/G22_fwd_rs_depth.launch"/>
+-->
+
   <arg name="camera"      default="camera"/>
   <arg name="bond"        default="false" />
   <arg name="respawn"     default="$(arg bond)" />
@@ -12,11 +16,11 @@
     <remap from="~input" to="/depth/depth_registered/points"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
-      filter_field_name: x
+      filter_field_name: x <!-- Right -->
       filter_limit_min: -10 <!-- -10 -->
       filter_limit_max:  10 <!--  10 -->
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
@@ -25,11 +29,11 @@
     <remap from="~input" to="/voxel_grid_x/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
     <rosparam>
-      filter_field_name: y
+      filter_field_name: y <!-- Down -->
       filter_limit_min: -10
       filter_limit_max:  10 <!--  10 -->
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
@@ -38,15 +42,16 @@
     <remap from="~input" to="/voxel_grid_y/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
     <rosparam>
-      filter_field_name: z
+      filter_field_name: z <!-- >
       filter_limit_min:  -10
       filter_limit_max:   10
       filter_limit_negative: False
-      leaf_size: 0.02
+      leaf_size: 0.05
     </rosparam>
   </node>
 
   <!-- Estimate point normals -->
+  
   <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/Obstacles $(arg manager)" output="screen">
     <remap from="~input" to="/voxel_grid_z/output" />
     <rosparam>
@@ -60,19 +65,22 @@
       don_radius_2:             0.30
       don_LT_threshold:         0.00
       don_GT_threshold:         0.10
-      normal_radius:            0.05
-      normal_x_LT_threshold:   -0.30 <!-- -0.30 -->
-      normal_x_GT_threshold:    0.30 <!--  0.30 -->
-      normal_y_LT_threshold:   -0.30 <!-- -0.30 -->
-      normal_y_GT_threshold:    0.30 <!--  0.30 -->
-      normal_z_LT_threshold:    0.956 <!--  0.94 -->
+      normal_radius:            0.05 <!--  0.05 -->
+      normal_x_LT_threshold:   -0.50 <!-- -0.30 -->
+      normal_x_GT_threshold:    0.50 <!--  0.30 -->
+      normal_y_LT_threshold:   -0.50 <!-- -0.30 -->
+      normal_y_GT_threshold:    0.50 <!--  0.30 -->
+      normal_z_LT_threshold:    0.866 <!--  0.956 -->
       normal_z_GT_threshold:    1.00
-      curvature_LT_threshold:   0.00 <!-- 0.000 -->
-      curvature_GT_threshold:   1000 <!-- 0.002 -->
-      intensity_LT_threshold:   0.00
-      intensity_GT_threshold:   1000
-      sor_nearest_neighbors:      50
-      sor_std_dev_multiplier:      1
+      curvature_LT_threshold:  -1000 <!-- 0.00 -->
+      curvature_GT_threshold:   0.001 <!-- 1000 -->
+      intensity_LT_threshold:  -1000 <!-- 0.00 -->
+      intensity_GT_threshold:   1000 <!-- 1000 --> 
+      sor_nearest_neighbors:       1 <!-- 50 -->
+      sor_std_dev_multiplier:      1 <!-- 1 --> 
+      ror_radius:               0.10 
+      ror_min_neighbors:           7
+      height_variance_radius:   0.25
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
       spatial_locator: 0
     </rosparam>
