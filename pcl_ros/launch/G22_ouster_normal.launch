@@ -1,5 +1,8 @@
 <launch>
 
+  <include file="/home/ohrad/catkin_ws/src/ouster_lidar/ouster_ros/os1.launch"/>
+  <include file="$(find realsense2_camera)/launch/G22_fwd_rs_depth.launch"/>
+
     <arg name="camera"      default="camera"/>
     <arg name="bond"        default="false" />
     <arg name="respawn"     default="$(arg bond)" />
@@ -65,11 +68,11 @@
       normal_x_GT_threshold:    0.50 <!-- paper  0.30 -->
       normal_y_LT_threshold:   -0.50 <!-- paper -0.30 -->
       normal_y_GT_threshold:    0.50 <!-- paper  0.30 -->
-      normal_z_LT_threshold:    0.00 <!-- 30degrees 0.866 -->  <!-- paper -0.956 -->
+      normal_z_LT_threshold:    0.866 <!-- 30degrees 0.866 -->  <!-- paper -0.956 -->
       normal_z_GT_threshold:    1.00
-      curvature_LT_threshold:   0.00
-      curvature_GT_threshold:   1000
-      intensity_LT_threshold:   0.00
+      curvature_LT_threshold:  -1000
+      curvature_GT_threshold:   0.001
+      intensity_LT_threshold:  -1000
       intensity_GT_threshold:   1000
       sor_nearest_neighbors:       1
       sor_std_dev_multiplier:      1
@@ -81,30 +84,27 @@
     </rosparam>
   </node>
 
-  <!-- Run a VoxelGrid filter on curvature (variance in height) proportional to roughness -->
-    <node pkg="nodelet" type="nodelet" name="voxel_grid_curv" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <!-- Run a RadiusOutlierRemoval filter -->
+<!--    <node pkg="nodelet" type="nodelet" name="voxel_grid_radius" args="load pcl/VoxelGrid $(arg manager)" output="screen">
     <remap from="~input" to="/terrain_assessment/output"/>
     <rosparam>
-      filter_field_name: curvature
-      filter_limit_min:  0.005
-      filter_limit_max:  1000
-      filter_limit_negative: False
-      leaf_size: 0.05
+      radius: 0.1
+      min_pts:  3
+      negative: true
     </rosparam>
   </node>
+-->
 
-    <!-- Run a VoxelGrid filter on intensity (slope of plane), 1 = traversable, 0 = untraversable -->
-    <node pkg="nodelet" type="nodelet" name="voxel_grid_intens" args="load pcl/VoxelGrid $(arg manager)" output="screen">
-    <remap from="~input" to="/voxel_grid_curv/output"/>
+    <!-- Run a StatisticalOutlierRemoval filter -->
+<!--    <node pkg="nodelet" type="nodelet" name="voxel_grid_stat" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <remap from="~input" to="/voxel_grid_intens/output"/>
     <rosparam>
-      filter_field_name: intensity
-      filter_limit_min:  0.99
-      filter_limit_max:  1.01
-      filter_limit_negative: False
-      leaf_size: 0.05
+      mean_k: 10
+      stddev:  1
+      negative: true
     </rosparam>
   </node>
-
+-->
 
   <!-- PCL to Laserscan Nodelet -->
   <node pkg="nodelet" type="nodelet" output="screen"
@@ -122,7 +122,7 @@
       <param name="angle_increment" type="double" value="0.0174533" />
       <param name="use_inf" type="boolean" value="true" />
 
-      <remap from="cloud_in" to="/voxel_grid_intens/output"/>
+      <remap from="cloud_in" to="/terrain_assessment/output"/>
       <remap from="scan" to="terrain_assessment/scan"/>
   </node>
 
