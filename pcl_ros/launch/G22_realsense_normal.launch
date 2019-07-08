@@ -1,8 +1,6 @@
 <launch>
 
-<!-->
   <include file="$(find realsense2_camera)/launch/G22_fwd_rs_depth.launch"/>
--->
 
   <arg name="camera"      default="camera"/>
   <arg name="bond"        default="false" />
@@ -42,7 +40,7 @@
     <remap from="~input" to="/voxel_grid_y/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
     <rosparam>
-      filter_field_name: z <!-- >
+      filter_field_name: z <!-- ? -->
       filter_limit_min:  -10
       filter_limit_max:   10
       filter_limit_negative: False
@@ -58,7 +56,7 @@
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
-      transform_pcl_roll:       -1.57079632679
+      transform_pcl_roll:       -1.57079632679 <!-- change to -2.0 when RealSense is tilded down -->
       transform_pcl_pitch:      0.00
       transform_pcl_yaw:        0.00
       don_radius_1:             0.03
