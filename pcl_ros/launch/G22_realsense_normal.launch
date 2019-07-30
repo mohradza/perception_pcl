@@ -56,7 +56,7 @@
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
-      transform_pcl_roll:       -1.57079632679 <!-- change to -2.0 when RealSense is tilded down -->
+      transform_pcl_roll:       -2.09439510239 <!-- -pi/2 + -pi/6 camera tilt -->
       transform_pcl_pitch:      0.00
       transform_pcl_yaw:        0.00
       don_radius_1:             0.03
