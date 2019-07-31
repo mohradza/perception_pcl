@@ -72,7 +72,7 @@
       don_radius_2:             0.30
       don_LT_threshold:         0.00
       don_GT_threshold:         0.10
-      normal_radius:            0.05 <!--  0.05 -->
+      normal_radius:            0.15 <!--  0.05 -->
       normal_x_LT_threshold:   -0.50 <!-- -0.30 -->
       normal_x_GT_threshold:    0.50 <!--  0.30 -->
       normal_y_LT_threshold:   -0.50 <!-- -0.30 -->
@@ -80,7 +80,7 @@
       normal_z_LT_threshold:    0.866 <!--  0.956 -->
       normal_z_GT_threshold:    1.00
       curvature_LT_threshold:  -1000 <!-- 0.00 -->
-      curvature_GT_threshold:   0.0001 <!-- 1000 -->
+      curvature_GT_threshold:   0.001 <!-- 1000 -->
       intensity_LT_threshold:  -1000 <!-- 0.00 -->
       intensity_GT_threshold:   1000 <!-- 1000 --> 
       sor_nearest_neighbors:      50 <!-- 50 -->
