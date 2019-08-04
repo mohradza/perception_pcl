@@ -15,8 +15,8 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
       filter_field_name: x <!-- Right -->
-      filter_limit_min: -0.4 <!-- -10 -->
-      filter_limit_max:  0.4 <!--  10 -->
+      filter_limit_min: -0.4 <!-- -0.4 -->
+      filter_limit_max:  0.4 <!--  0.4 -->
       filter_limit_negative: False
       leaf_size: 0.05
     </rosparam>
@@ -28,7 +28,7 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
     <rosparam>
       filter_field_name: y <!-- Down -->
-      filter_limit_min: -10
+      filter_limit_min: -10 <!-- -10 -->
       filter_limit_max:  10 <!--  10 -->
       filter_limit_negative: False
       leaf_size: 0.05
@@ -41,8 +41,8 @@
     <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
     <rosparam>
       filter_field_name: z <!-- ? -->
-      filter_limit_min:  0.5
-      filter_limit_max:  2.0
+      filter_limit_min:  0.5 <!-- 0.5 -->
+      filter_limit_max:  2.0 <!-- 2.0 -->
       filter_limit_negative: False
       leaf_size: 0.05
     </rosparam>
@@ -67,7 +67,7 @@
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
-      transform_pcl_roll:       -2.09439510239 <!-- -pi/2 + -pi/6 camera tilt -->
+      transform_pcl_roll:       -2.09439510239 <!-- -2.09439510239 = -pi/2 + -pi/6 camera tilt -->
       transform_pcl_pitch:      0.00
       transform_pcl_yaw:        0.00
       don_radius_1:             0.03
