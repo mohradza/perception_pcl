@@ -50,6 +50,13 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/search/pcl_search.h>
 
+#include "sensor_msgs/Imu.h"
+
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
+
+#define RADIANS_TO_DEGREES(radians) ((radians) * (180.0 / M_PI))
+
 void 
 pcl_ros::Obstacles::emptyPublish (const PointCloudInConstPtr &cloud_in)
 {
@@ -64,16 +71,45 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
                                            const IndicesPtr &indices)
 {
 
+  ////////////////////////////////
+  // GET VEHICLE ROLL AND PITCH //
+  ////////////////////////////////
+
+  tf::TransformListener listener;
+  tf::StampedTransform T_world_imu;
+  double imu_roll, imu_pitch, imu_yaw;
+
+  try
+  {
+    listener.waitForTransform("/world", "/imu_orientation", ros::Time::now(), ros::Duration(0.05) );
+    listener.lookupTransform("/world", "/imu_orientation", ros::Time(0), T_world_imu);
+    tf::Matrix3x3 m(T_world_imu.getRotation());
+    int solution_number = 1;
+    m.getEulerYPR(imu_yaw, imu_pitch, imu_roll, solution_number);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_WARN("%s",ex.what()); 
+    // ros::Duration(0.1).sleep();
+  }
+
+
+  // ROS_INFO("\nRoll   : %.3f\n"
+  //          "  Pitch  : %.3f\n"
+  //          "  Yaw    : %.3f\n",
+  //          RADIANS_TO_DEGREES(roll), RADIANS_TO_DEGREES(pitch), RADIANS_TO_DEGREES(yaw)  );
+
   /////////////////////////////////
   // TRANSFORM INPUT POINT CLOUD //
   /////////////////////////////////
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in_transformed (new pcl::PointCloud<pcl::PointXYZ>);
-  tf::Transform transform;
+  tf::Transform transform_pcl;
   tf::Quaternion q;
 
-  transform.setRotation( tf::createQuaternionFromRPY(transform_pcl_roll_, transform_pcl_pitch_, transform_pcl_yaw_) );
-  pcl_ros::transformPointCloud	(	*cloud_in, *cloud_in_transformed, transform);
+  // Note roll and pitch are intentionally backwards due to the image frame to boldy frame transform_pcl. The IMU transform_pcl converts from body to world frame.
+  transform_pcl.setRotation( tf::createQuaternionFromRPY(transform_pcl_roll_ - imu_pitch, transform_pcl_pitch_ - imu_roll, transform_pcl_yaw_) );
+  pcl_ros::transformPointCloud	(	*cloud_in, *cloud_in_transformed, transform_pcl);
 
   ///////////////////////
   // CALCULATE NORMALS //
