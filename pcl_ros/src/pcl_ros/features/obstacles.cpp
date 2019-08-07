@@ -78,7 +78,7 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   tf::TransformListener listener;
   tf::StampedTransform T_world_imu;
   double imu_roll, imu_pitch, imu_yaw;
-
+/*
   try
   {
     listener.waitForTransform("/world", "/imu_orientation", ros::Time::now(), ros::Duration(0.05) );
@@ -92,7 +92,7 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
     ROS_WARN("%s",ex.what()); 
     // ros::Duration(0.1).sleep();
   }
-
+*/
 
   // ROS_INFO("\nRoll   : %.3f\n"
   //          "  Pitch  : %.3f\n"
@@ -108,7 +108,7 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
   tf::Quaternion q;
 
   // Note roll and pitch are intentionally backwards due to the image frame to boldy frame transform_pcl. The IMU transform_pcl converts from body to world frame.
-  transform_pcl.setRotation( tf::createQuaternionFromRPY(transform_pcl_roll_ - imu_pitch, transform_pcl_pitch_ - imu_roll, transform_pcl_yaw_) );
+  transform_pcl.setRotation( tf::createQuaternionFromRPY(transform_pcl_roll_, transform_pcl_pitch_, transform_pcl_yaw_) );
   pcl_ros::transformPointCloud	(	*cloud_in, *cloud_in_transformed, transform_pcl);
 
   ///////////////////////
