@@ -1,16 +1,13 @@
 <launch>
-<!--
-  <node pkg="octomap_server" type="imu_tf_pub" name="imu_tf_pub" output="screen"/>
--->
   <arg name="camera"      default="camera"/>
   <arg name="bond"        default="true" />
   <arg name="respawn"     default="$(arg bond)" />
   <arg name="manager"     default="terrain_manager"/>
 
-  <node pkg="nodelet" type="nodelet" respawn="true" name="$(arg manager)" args="manager" output="screen" />
+  <node pkg="nodelet" type="nodelet" respawn="true" name="$(arg manager)" args="manager" />
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid $(arg manager)" output="screen" respawn="true" >
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid $(arg manager)" respawn="true" >
     <remap from="~input" to="camera_fore/depth/color/points"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
@@ -23,7 +20,7 @@
   </node>
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_y" args="load pcl/VoxelGrid $(arg manager)" output="screen" respawn="true" >
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_y" args="load pcl/VoxelGrid $(arg manager)"  respawn="true" >
     <remap from="~input" to="voxel_grid_x/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
     <rosparam>
@@ -36,7 +33,7 @@
   </node>
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_z" args="load pcl/VoxelGrid $(arg manager)" output="screen" respawn="true">
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_z" args="load pcl/VoxelGrid $(arg manager)" respawn="true">
     <remap from="~input" to="voxel_grid_y/output"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
     <rosparam>
@@ -49,7 +46,7 @@
   </node>
 
   <!-- Run a StatisticalOutlierRemoval filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="sor" args="load pcl/StatisticalOutlierRemoval $(arg manager)" output="screen" respawn="true">
+  <node pkg="nodelet" type="nodelet" name="sor" args="load pcl/StatisticalOutlierRemoval $(arg manager)"  respawn="true">
     <remap from="~input" to="voxel_grid_z/output"/>
     <rosparam>
       mean_k: 50
@@ -59,8 +56,8 @@
   </node>
 
   <!-- Estimate point normals -->
-  
-  <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/Obstacles $(arg manager)" output="screen" respawn="true">
+
+  <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/Obstacles $(arg manager)" respawn="true">
     <remap from="~input" to="sor/output" />
     <remap from="terrain_assessment/output" to="terrain_assessment/output/raw"/>
     <rosparam>
@@ -81,13 +78,13 @@
       normal_y_GT_threshold:    0.50 <!--  0.30 -->
       normal_z_LT_threshold:    0.866 <!--  0.956 -->
       normal_z_GT_threshold:    1.00
-      curvature_LT_threshold:  -1000 <!-- 0.00 -->
-      curvature_GT_threshold:   0.001 <!-- 1000 -->
+      curvature_LT_threshold:  -1000000 <!-- 0.00 -->
+      curvature_GT_threshold:   1000000 <!-- 1000 -->
       intensity_LT_threshold:  -1000 <!-- 0.00 -->
-      intensity_GT_threshold:   1000 <!-- 1000 --> 
+      intensity_GT_threshold:   1000 <!-- 1000 -->
       sor_nearest_neighbors:      50 <!-- 50 -->
-      sor_std_dev_multiplier:      1 <!-- 1 --> 
-      ror_radius:               0.10 
+      sor_std_dev_multiplier:      1 <!-- 1 -->
+      ror_radius:               0.10
       ror_min_neighbors:           7
       height_variance_radius:   0.05
       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
@@ -96,7 +93,7 @@
   </node>
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_final" args="load pcl/VoxelGrid $(arg manager)" output="screen" respawn="true">
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_final" args="load pcl/VoxelGrid $(arg manager)" respawn="true">
     <remap from="~input" to="terrain_assessment/output/raw"/>
     <remap from="voxel_grid_final/output" to="terrain_assessment/output/final"/>
     <rosparam>
@@ -109,7 +106,7 @@
   </node>
 
   <!-- PCL to Laserscan Nodelet -->
-  <node pkg="nodelet" type="nodelet" output="screen" respawn="true" args="load pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet $(arg manager)" name="pcl2laser">
+  <node pkg="nodelet" type="nodelet" respawn="true" args="load pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet $(arg manager)" name="pcl2laser">
 
       <param name="target_frame" type="str" value="camera_fore_depth_optical_frame" />
       <param name="min_height" type="double" value="-10.0" />
