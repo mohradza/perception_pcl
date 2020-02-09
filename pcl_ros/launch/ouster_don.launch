@@ -1,0 +1,66 @@
+<launch>
+  <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid pcl_manager" output="screen">
+    <remap from="~input" to="/os1_node/points"/>
+    <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
+    <rosparam>
+      filter_field_name: x
+      filter_limit_min: -20
+      filter_limit_max: 20
+      filter_limit_negative: False
+      leaf_size: 0.02
+    </rosparam>
+  </node>
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_y" args="load pcl/VoxelGrid pcl_manager" output="screen">
+    <remap from="~input" to="/voxel_grid_x/output"/>
+    <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
+    <rosparam>
+      filter_field_name: y
+      filter_limit_min: -20
+      filter_limit_max: 20
+      filter_limit_negative: False
+      leaf_size: 0.02
+    </rosparam>
+  </node>
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_z" args="load pcl/VoxelGrid pcl_manager" output="screen">
+    <remap from="~input" to="/voxel_grid_y/output"/>
+    <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
+    <rosparam>
+      filter_field_name: z
+      filter_limit_min: -1
+      filter_limit_max:  0
+      filter_limit_negative: False
+      leaf_size: 0.02
+    </rosparam>
+  </node>
+
+  <!-- Estimate point normals -->
+  <node pkg="nodelet" type="nodelet" name="don" args="load pcl/DiffNormals pcl_manager" output="screen">
+    <remap from="~input" to="/voxel_grid_z/output" />
+    <rosparam>
+      # -[ Mandatory parameters
+      k_search:                 0.00
+      radius_search:            0.00
+      don_radius_1:             0.02 <!--  0.02 -->
+      don_radius_2:             1.00 <!--  0.75 -->
+      don_threshold:            0.01 <!--  0.001 -->
+      normal_radius:            0.02 <!--  0.05 -->
+      normal_x_min_threshold:  -0.20 <!-- -0.10 -->
+      normal_x_max_threshold:   0.20 <!--  0.10 -->
+      normal_y_min_threshold:  -0.20 <!-- -0.10 -->
+      normal_y_max_threshold:   0.20 <!--  0.10 -->
+      normal_z_min_threshold:   0.98 <!--  0.98 -->
+      normal_z_max_threshold:   1.00 <!--  9.99 -->
+      curvature_min_threshold:  0.00
+      curvature_max_threshold:  0.01
+      # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
+      spatial_locator: 0
+    </rosparam>
+  </node>
+</launch>

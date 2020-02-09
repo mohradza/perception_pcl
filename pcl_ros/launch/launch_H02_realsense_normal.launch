@@ -1,0 +1,133 @@
+<launch>
+
+  <node pkg="octomap_server" type="imu_tf_pub" name="imu_tf_pub" output="screen"/>
+
+  <include file="$(find realsense2_camera)/launch/rs_H02.launch"/>
+
+  <arg name="camera"      default="camera"/>
+  <arg name="bond"        default="false" />
+  <arg name="respawn"     default="$(arg bond)" />
+  <arg name="manager"     default="terrain_manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen" />
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <remap from="~input" to="/camera/depth/color/points"/>
+    <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
+    <rosparam>
+      filter_field_name: x <!-- Right -->
+      filter_limit_min: -0.4 <!-- -0.4 -->
+      filter_limit_max:  0.4 <!--  0.4 -->
+      filter_limit_negative: False
+      leaf_size: 0.05
+    </rosparam>
+  </node>
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_y" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <remap from="~input" to="/voxel_grid_x/output"/>
+    <remap from="~voxel_grid/output" to="/voxel_grid_y/output"/>
+    <rosparam>
+      filter_field_name: y <!-- Down -->
+      filter_limit_min: -10 <!-- -10 -->
+      filter_limit_max:  10 <!--  10 -->
+      filter_limit_negative: False
+      leaf_size: 0.05
+    </rosparam>
+  </node>
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_z" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <remap from="~input" to="/voxel_grid_y/output"/>
+    <remap from="~voxel_grid/output" to="/voxel_grid_z/output"/>
+    <rosparam>
+      filter_field_name: z <!-- ? -->
+      filter_limit_min:  0.1 <!-- 0.5 -->
+      filter_limit_max:  2.5 <!-- 2.0 -->
+      filter_limit_negative: False
+      leaf_size: 0.05
+    </rosparam>
+  </node>
+
+  <!-- Run a StatisticalOutlierRemoval filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="sor" args="load pcl/StatisticalOutlierRemoval $(arg manager)" output="screen">
+    <remap from="~input" to="/voxel_grid_z/output"/>
+    <rosparam>
+      mean_k: 50
+      stddev:  1.0
+      negative:  False
+    </rosparam>
+  </node>
+
+  <!-- Estimate point normals -->
+  
+  <node pkg="nodelet" type="nodelet" name="terrain_assessment" args="load pcl/Obstacles $(arg manager)" output="screen">
+    <remap from="~input" to="/sor/output" />
+    <remap from="terrain_assessment/output" to="/terrain_assessment/output/raw"/>
+    <rosparam>
+      # -[ Mandatory parameters
+      k_search:                 0.00
+      radius_search:            0.00
+      transform_pcl_roll:       -2.09439510239 <!-- -2.09439510239 = -pi/2 + -pi/6 camera tilt -->
+      transform_pcl_pitch:      0.00
+      transform_pcl_yaw:       -1.57079632679
+      don_radius_1:             0.03
+      don_radius_2:             0.30
+      don_LT_threshold:         0.00
+      don_GT_threshold:         0.10
+      normal_radius:            0.15 <!--  0.05 -->
+      normal_x_LT_threshold:   -0.50 <!-- -0.30 -->
+      normal_x_GT_threshold:    0.50 <!--  0.30 -->
+      normal_y_LT_threshold:   -0.50 <!-- -0.30 -->
+      normal_y_GT_threshold:    0.50 <!--  0.30 -->
+      normal_z_LT_threshold:    0.866 <!--  0.956 -->
+      normal_z_GT_threshold:    1.00
+      curvature_LT_threshold:  -1000 <!-- 0.00 -->
+      curvature_GT_threshold:   0.001 <!-- 1000 -->
+      intensity_LT_threshold:  -1000 <!-- 0.00 -->
+      intensity_GT_threshold:   1000 <!-- 1000 --> 
+      sor_nearest_neighbors:      50 <!-- 50 -->
+      sor_std_dev_multiplier:      1 <!-- 1 --> 
+      ror_radius:               0.10 
+      ror_min_neighbors:           7
+      height_variance_radius:   0.05
+      # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
+      spatial_locator: 0
+    </rosparam>
+  </node>
+
+  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+  <node pkg="nodelet" type="nodelet" name="voxel_grid_final" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+    <remap from="~input" to="/terrain_assessment/output/raw"/>
+    <remap from="/voxel_grid_final/output" to="/terrain_assessment/output/final"/>
+    <rosparam>
+      filter_field_name: x <!-- ? -->
+      filter_limit_min:  0.1
+      filter_limit_max:  2.0
+      filter_limit_negative: False
+      leaf_size: 0.05
+    </rosparam>
+  </node>
+
+  <!-- PCL to Laserscan Nodelet -->
+  <node pkg="nodelet" type="nodelet" output="screen"
+
+      args="load pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet $(arg manager)"
+      name="pcl2laser">
+
+      <param name="target_frame" type="str" value="camera_depth_optical_frame" />
+      <param name="min_height" type="double" value="-10.0" />
+      <param name="max_height" type="double" value="10.0" />
+      <param name="min_range" type="double" value="0" />
+      <param name="max_range" type="double" value="1000" />
+      <param name="angle_min" type="double" value="-0.78539816339" /> <!-- 1.1780972451 -->
+      <param name="angle_max" type="double" value="0.78539816339" /> <!-- 1.96349540849 -->
+      <param name="angle_increment" type="double" value="0.0174533" />
+      <param name="use_inf" type="boolean" value="true" />
+
+      <remap from="cloud_in" to="terrain_assessment/output/final"/>
+      <remap from="scan" to="terrain_assessment/scan"/>
+  </node>
+
+</launch>
