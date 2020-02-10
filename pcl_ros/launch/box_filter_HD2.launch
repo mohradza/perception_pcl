@@ -1,0 +1,23 @@
+<launch>
+
+<!-- PCL Manager -->
+    <node pkg="nodelet" type="nodelet" name="cropbox_filter_pcl_manager" args="manager" output="screen"/>
+
+    <!-- A CropBox filter to avoid self-detection -->
+    <node pkg="nodelet" type="nodelet" name="self_removal" args="load pcl/CropBox cropbox_filter_pcl_manager" output="screen">
+      <remap from="~input" to="os1_cloud_node/points" />
+      <remap from="~output" to="octomap_in" />
+      <rosparam>
+        input_frame: os1_lidar
+        output_frame: os1_lidar
+        # true: no points in the box, false: no points outside the box
+        negative: true
+        min_x: -0.5
+        max_x: 0.1
+        min_y: -.4
+        max_y: .4
+        min_z: -1.0
+        max_z: 10.0
+      </rosparam>
+    </node>
+</launch>
