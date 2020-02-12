@@ -6,18 +6,18 @@
     <!-- A CropBox filter to avoid self-detection -->
     <node pkg="nodelet" type="nodelet" name="self_removal" args="load pcl/CropBox cropbox_filter_pcl_manager" output="screen">
       <remap from="~input" to="os1_cloud_node/points" />
-      <remap from="~output" to="octomap_in" />
+      <remap from="~output" to="os1_cloud_node/points_box_filter" />
       <rosparam>
         input_frame: os1_lidar
         output_frame: os1_lidar
         # true: no points in the box, false: no points outside the box
-        negative: true
-        min_x: -2.0
-        max_x: -0.10
-        min_y: -1.0
-        max_y: 1.0
+        negative: false
+        min_x: 0.0
+        max_x: 1.25
+        min_y: -0.25
+        max_y: 0.25
         min_z: -1.0
-        max_z: 1.0
+        max_z: 0.0
       </rosparam>
     </node>
 </launch>
