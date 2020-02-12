@@ -11,7 +11,7 @@
         input_frame: os1_lidar
         output_frame: os1_lidar
         # true: no points in the box, false: no points outside the box
-        negative: false
+        negative: true
         min_x: 0.0
         max_x: 1.25
         min_y: -0.25
