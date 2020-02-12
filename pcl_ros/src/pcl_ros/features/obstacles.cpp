@@ -49,6 +49,7 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/search/pcl_search.h>
+#include <pcl/filters/extract_indices.h>
 
 #include "sensor_msgs/Imu.h"
 
@@ -70,6 +71,20 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
                                            const PointCloudInConstPtr &surface,
                                            const IndicesPtr &indices)
 {
+
+  // // std::vector<int> indices2;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::removeNaNFromPointCloud(*cloud_in,*cloud_in_filtered);
+
+
+  boost::shared_ptr<std::vector<int>> indices_nan(new std::vector<int>);
+  pcl::removeNaNFromPointCloud(*cloud_in, *indices_nan);
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  extract.setInputCloud(cloud_in);
+  extract.setIndices(indices_nan);
+  extract.setNegative(false);
+  extract.filter(*cloud_in_filtered);
+
 
   ////////////////////////////////
   // GET VEHICLE ROLL AND PITCH //
@@ -109,7 +124,7 @@ pcl_ros::Obstacles::computePublish (const PointCloudInConstPtr &cloud_in,
 
   // Note roll and pitch are intentionally backwards due to the image frame to boldy frame transform_pcl. The IMU transform_pcl converts from body to world frame.
   transform_pcl.setRotation( tf::createQuaternionFromRPY(transform_pcl_roll_, transform_pcl_pitch_, transform_pcl_yaw_) );
-  pcl_ros::transformPointCloud	(	*cloud_in, *cloud_in_transformed, transform_pcl);
+  pcl_ros::transformPointCloud	(	*cloud_in_filtered, *cloud_in_transformed, transform_pcl);
 
   ///////////////////////
   // CALCULATE NORMALS //

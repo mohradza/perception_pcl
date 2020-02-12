@@ -8,7 +8,7 @@
 
   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
   <node pkg="nodelet" type="nodelet" name="voxel_grid_x" args="load pcl/VoxelGrid $(arg manager)" respawn="true" >
-    <remap from="~input" to="camera_fore/depth/color/points"/>
+    <remap from="~input" to="camera_low/depth/color/points"/>
     <remap from="~voxel_grid/output" to="/voxel_grid_x/output"/>
     <rosparam>
       filter_field_name: x <!-- Right -->
@@ -64,7 +64,7 @@
       # -[ Mandatory parameters
       k_search:                 0.00
       radius_search:            0.00
-      transform_pcl_roll:       -2.09439510239 <!-- -2.09439510239 = -pi/2 + -pi/6 camera tilt -->
+      transform_pcl_roll:       -2.19439510239 <!-- -2.09439510239 = -pi/2 + -pi/6 camera tilt -->
       transform_pcl_pitch:      0.00
       transform_pcl_yaw:       -1.57079632679
       don_radius_1:             0.03
@@ -108,7 +108,7 @@
   <!-- PCL to Laserscan Nodelet -->
   <node pkg="nodelet" type="nodelet" respawn="true" args="load pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet $(arg manager)" name="pcl2laser">
 
-      <param name="target_frame" type="str" value="camera_fore_depth_optical_frame" />
+      <param name="target_frame" type="str" value="camera_low_depth_optical_frame" />
       <param name="min_height" type="double" value="-10.0" />
       <param name="max_height" type="double" value="10.0" />
       <param name="min_range" type="double" value="0" />
